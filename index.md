@@ -2,7 +2,7 @@
 
 i love how cool it is
 
-read [this](hi)
+read [this](cool-blog)
 
 ### Jekyll Themes
 
