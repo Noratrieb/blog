@@ -64,6 +64,9 @@ location in memory, writing to the box will cause the pointer to read the new va
 
 Now construct a box, get a pointer to it, and pass the two to the function. Run the program...
 
+... and everything is fine. Let's run it in release mode. This should work as well, since the optimizer
+isn't allowed to change observable behaviour, and an assert is very observable. Run the progrm...
+
 ```
 thread 'main' panicked at 'assertion failed: `(left != right)`
   left: `0`,
@@ -86,8 +89,9 @@ See the little attribute on the first parameter called `noalias`? That's what's 
 This allows the optimizer to assume that writing to the box pointer doesn't affect the other pointer - they are
 not allowed to alias (it's like if they used `restrict` in C).
 
-If you're a viewer of Jon Gjengset's content (which I can highly recommend), this might sound familiar to you: Jon
-made an entire video about this before, since his crate `left-right` was affected by this (https://youtu.be/EY7Wi9fV5bk).
+If you're a viewer of [Jon Gjengset](https://twitter.com/jonhoo)'s content (which I can highly recommend), 
+this might sound familiar to you: Jon has made an entire video about this before, since his crate `left-right`
+was affected by this (https://youtu.be/EY7Wi9fV5bk).
 
 If you're looking for _any_ hint that using box emits `noalias`, you have to look no further than the documentation
 for [`std::boxed`](https://doc.rust-lang.org/nightly/std/boxed/index.html#considerations-for-unsafe-code). Well, the nightly or beta docs, because I only added this section very recently. For years, this behaviour was simply undocumented. So lots of
@@ -104,3 +108,47 @@ what you intended to happen. Examples of UB include use-after-free, out of bound
 I cannot recommend Miri highly enough for all unsafe code you're writing (sadly support for some IO functions
 and FFI is still lacking).
 
+So, let's see whether our code contains UB. It has to, since otherwise the optimizer wouldn't be allowed to change
+observable behaviour (since the assert doesn't fail in debug mode).
+
+```rust
+error: Undefined Behavior: attempting a read access using <3314> at alloc1722[0x0], but that tag does not exist in the borrow stack for this location
+  --> src/main.rs:2:26
+   |
+2  |     let value = unsafe { *ptr };
+   |                          ^^^^
+   |                          |
+   |                          attempting a read access using <3314> at alloc1722[0x0], but that tag does not exist in the borrow stack for this location
+   |                          this error occurs as part of an access at alloc1722[0x0..0x1]
+   |
+   = help: this indicates a potential bug in the program: it performed an invalid operation, but the Stacked Borrows rules it violated are still experimental
+   = help: see https://github.com/rust-lang/unsafe-code-guidelines/blob/master/wip/stacked-borrows.md for further information
+help: <3314> was created by a retag at offsets [0x0..0x1]
+  --> src/main.rs:10:26
+   |
+10 |     let ptr: *const u8 = &*b;
+   |                          ^^^
+help: <3314> was later invalidated at offsets [0x0..0x1]
+  --> src/main.rs:12:29
+   |
+12 |     takes_box_and_ptr_to_it(b, ptr);
+   |                             ^
+   = note: backtrace:
+   = note: inside `takes_box_and_ptr_to_it` at src/main.rs:2:26
+note: inside `main` at src/main.rs:12:5
+  --> src/main.rs:12:5
+   |
+12 |     takes_box_and_ptr_to_it(b, ptr);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+```
+
+This behaviour does indeed not look very defined at all. But what went wrong? There's a lot of information here.
+
+First of all, it says that we attempted a read access, and that this access failed because the tag does not exist in the
+borrow stack. This is something about stacked borrows, the experimental memory model for Rust that is implemented
+in Miri. For an excellent introduction, see this part of the great book "Learning Rust With Entirely Too Many Linked Lists:
+https://rust-unofficial.github.io/too-many-lists/fifth-stacked-borrows.html.
+
+In short: each pointer has a unique tag attacked to it. Bytes in memory have a stack of such tags, and only the pointer
+that have their tag in the stack are allowed to access it. Tags can be pushed and popped onto the stack through various
+operations, for example borrowing.
