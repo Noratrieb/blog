@@ -104,7 +104,7 @@ pointers are concerned.
 
 # Stacked Borrows and Miri
 
-[Miri](https://github.com/rust-lang/miri) is an interpreter for Rust code with the goal of finding undefinde behaviour.
+[Miri](https://github.com/rust-lang/miri) is an interpreter for Rust code with the goal of finding undefined behaviour.
 Undefined behaviour, UB for short, is behaviour of a program upon which no restrictions are imposed. If UB is executed,
 _anything_ can happen, including segmentation faults, silent memory corruption, leakage of private keys or exactly
 what you intended to happen. Examples of UB include use-after-free, out of bounds reads or data races.
