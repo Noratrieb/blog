@@ -1,12 +1,12 @@
 +++
 title = "Box Is a Unique Type"
-date = "2022-07-21T17:34:24+02:00"
+date = "2022-07-22"
 author = "Nilstrieb"
 authorTwitter = "@Nilstrieb"
 cover = ""
-tags = ["", ""]
-keywords = ["", ""]
-description = ""
+tags = ["rust", "unsafe code"]
+keywords = ["box", "noalias"]
+description = "The current and future aliasing semantics of Box"
 showFullContent = false
 readingTime = true
 hideComments = false
@@ -14,7 +14,7 @@ draft = true
 +++
 
 We have all used `Box<T>` before in our Rust code. It's a glorious type, with great ergonomics
-and flexibitility. We can use it to simply put our values on the heap, but it can do even more
+and flexibitility. We can use it to put our values on the heap, but it can do even more
 than that!
 
 ```rust
@@ -78,7 +78,8 @@ I've heard that those do sometimes happen, right?
 
 Trusting our instincts that "it's never a miscompilation until it is one", we assume that LLVM behaved
 well here. But what allows it to make this optimization? Taking a look at the generated LLVM-IR (by using
-`--emit llvm-ir`) reveals the solution: (severely shortened to only show the relevant parts)
+`--emit llvm-ir -O`, the `-O` is important since rustc only emits these attributes with optimizations on)
+ reveals the solution: (severely shortened to only show the relevant parts)
 
 ```llvmir
 define void @takes_box_and_ptr_to_it(i8* noalias %0, i8* %ptr) {
@@ -89,27 +90,26 @@ See the little attribute on the first parameter called `noalias`? That's what's 
 This allows the optimizer to assume that writing to the box pointer doesn't affect the other pointer - they are
 not allowed to alias (it's like if they used `restrict` in C).
 
-If you're a viewer of [Jon Gjengset](https://twitter.com/jonhoo)'s content (which I can highly recommend), 
-this might sound familiar to you: Jon has made an entire video about this before, since his crate `left-right`
+This might sound familiar to you if you're a viewer of [Jon Gjengset](https://twitter.com/jonhoo)'s content (which I can highly recommend). Jon has made an entire video about this before, since his crate `left-right`
 was affected by this (https://youtu.be/EY7Wi9fV5bk).
 
 If you're looking for _any_ hint that using box emits `noalias`, you have to look no further than the documentation
-for [`std::boxed`](https://doc.rust-lang.org/nightly/std/boxed/index.html#considerations-for-unsafe-code). Well, the nightly or beta docs, because I only added this section very recently. For years, this behaviour was simply undocumented. So lots of
-code was written thinking that box was "just a RAII pointer" (a pointer that allocates the value in the constructor,
-and deallocates it in the destructor on drop) for all pointer are concerned.
+for [`std::boxed`](https://doc.rust-lang.org/nightly/std/boxed/index.html#considerations-for-unsafe-code). Well, the nightly or beta docs, because I only added this section very recently. For years, this behaviour was not really documented, and you had to
+belong to the arcane circles of the select few who were aware of it. So lots of code was written thinking that box was "just a RAII pointer" (a pointer that allocates the value in the constructor, and deallocates it in the destructor on drop) for all
+pointers are concerned.
 
 # Stacked Borrows and Miri
 
-[https://github.com/rust-lang/miri](Miri) is an interpreter for Rust code with the goal of finding undefinde behaviour.
+[Miri](https://github.com/rust-lang/miri) is an interpreter for Rust code with the goal of finding undefinde behaviour.
 Undefined behaviour, UB for short, is behaviour of a program upon which no restrictions are imposed. If UB is executed,
 _anything_ can happen, including segmentation faults, silent memory corruption, leakage of private keys or exactly
 what you intended to happen. Examples of UB include use-after-free, out of bounds reads or data races.
 
 I cannot recommend Miri highly enough for all unsafe code you're writing (sadly support for some IO functions
-and FFI is still lacking).
+and FFI is still lacking, and it's still very slow).
 
 So, let's see whether our code contains UB. It has to, since otherwise the optimizer wouldn't be allowed to change
-observable behaviour (since the assert doesn't fail in debug mode).
+observable behaviour (since the assert doesn't fail in debug mode). `$ cargo miri run`...
 
 ```rust,ignore
 error: Undefined Behavior: attempting a read access using <3314> at alloc1722[0x0], but that tag does not exist in the borrow stack for this location
@@ -146,14 +146,13 @@ This behaviour does indeed not look very defined at all. But what went wrong? Th
 
 First of all, it says that we attempted a read access, and that this access failed because the tag does not exist in the
 borrow stack. This is something about stacked borrows, the experimental memory model for Rust that is implemented
-in Miri. For an excellent introduction, see this part of the great book "Learning Rust With Entirely Too Many Linked Lists:
-https://rust-unofficial.github.io/too-many-lists/fifth-stacked-borrows.html.
+in Miri. For an excellent introduction, see this part of the great book [Learning Rust With Entirely Too Many Linked Lists](https://rust-unofficial.github.io/too-many-lists/fifth-stacked-borrows.html).
 
-In short: each pointer has a unique tag attacked to it. Bytes in memory have a stack of such tags, and only the pointer
-that have their tag in the stack are allowed to access it. Tags can be pushed and popped onto the stack through various
+In short: each pointer has a unique tag attacked to it. Bytes in memory have a stack of such tags, and only the pointers
+that have their tag in the stack are allowed to access it. Tags can be pushed and popped from the stack through various
 operations, for example borrowing.
 
-In the code exampl above, we get a nice little hint where the tag was created. When we created a reference (that was then
+In the code example above, we get a nice little hint where the tag was created. When we created a reference (that was then
 coerced into a raw pointer) from our box, it got a new tag called `<3314>`. Then, when we moved the box into the function,
 something happened: The tag was invalidated and popped off the borrow stack. That's because box invalidates all tags when it's
 moved. The tag was popped off the borrow stack and we tried to read from it anyways - undefined behaviour happened!
@@ -173,7 +172,7 @@ the heap, and therefore moving it should invalidate pointers, since moving `T` d
 this comparison doesn't make sense to me. While `Box<T>` usually behaves like a `T`, it's just a pointer. Writers of unsafe
 code _know_ that box is just a pointer, and will abuse that knowledge, accidentally causing UB with it. While this can be
 mitigated with better docs and teaching, like how no one questions the uniqueness of `&mut T` (maybe that's also because that
-one makes intuitive sense, shared xor mutable is a concept that makes a lot of sense), I think it will always be a problem,
+one makes intuitive sense, "shared xor mutable" is a simple concept), I think it will always be a problem,
 because in my opinion, box being unique and invalidating pointers on move is simply not intiutive.
 
 When a box is moved, the pointer bytes change their location in memory. But the bytes the box points to stay the same. They don't
@@ -183,33 +182,26 @@ There are also other reasons why the box behaviour is not desirable. Even people
 to write code that goes directly against this behaviour at some point. But usually, fixing it is pretty simple: Storing a raw
 pointer (or `NonNull<T>`) instead of a box, and using the constructor and drop to allocate and deallocate the backing box.
 This is fairly inconvenient, but totally acceptable. There are bigger problems though. There are crates like `owning_ref`
-that want to expose a generic interface over any type. Users like to chose box, and sometimes _have_ to chose box because of
+that want to expose a generic interface over any type. Users like to choose box, and sometimes _have_ to chose box because of
 other box-exclusive features it offers. Even worse is `string_cache`, which is extremely hard to fix.
-
-<!--
-Here's another fun fact that just occurred to me during writing: For `&mut T` we usually emit noalis, which makes a lot of sense.
-But for `Pin<&mut T>` where `T: !Unpin`, we don't, because `T` is probably self-referential and will therefore alias the reference
-with its self-references. For `Pin<Box<T>>` were `T: !Unpin`, we still emit noalias. This is a bug, but I don't think
-it's worth it to specifically fix it, since we should at least be able to remove `noalias` from box in _all_ cases.
--->
 
 Then last but not least, there's the opinionated fact that `Box<T>` shall be implementable entirely in user code. While we are
 many missing language features away from this being the case, the `noalias` case is also magic descended upon box itself, with no
 user code ever having access to it.
 
-# noalias, nogain
+# noalias, noslow
 
 There are also several arguments in favour of box being unique and special cased here. To negate the last argument above, it can
 be said that `Box<T>` _is_ a very special type. It's just like a `T`, but on the heap. Using this mental model, it's very easy to
-justify all the box magic and it's unique behaviour.
+justify all the box magic and its unique behaviour.
 
-But all of this mental model thinking is nice and all, but what does this bring us? This is just one mental model of box, and
+This mental model is one that many people have, but what does this bring us? This is just one mental model of box, and
 there are other mental models of it (like "a reference that manages its lifetime itself" or "a safe RAII pointer").
 
 There is one clear potential benefit from this box behaviour. ✨Optimizations✨. `noalias` doesn't exist for fun, it's something
-that can bring clear performance wins (for `noalias` on `&mut T`, those were clearly measureable). So the only question remains:
+that can bring clear performance wins (for `noalias` on `&mut T`, those were   measureable). So the only question remains:
 How much performance does `noalias` on `Box<T>` give us now, and how much potential performance improvements could we get in the 
-future? For the latter, there is no answer. For the former, there is. `rustc` has [_no_ performance improvements at all](https://github.com/rust-lang/rust/pull/99527) from being compiled with `noalias` on `Box<T>`.
+future? For the latter, there is no simple answer. For the former, there is. `rustc` has [_no_ performance improvements](https://github.com/rust-lang/rust/pull/99527) from being compiled with `noalias` on `Box<T>`.
 
 I have not yet benchmarked ecosystem crates without box noalias and don't have the capacity to do so right now, so I would be very
 grateful if anyone wanted to pick that up and report the results.
@@ -222,16 +214,9 @@ against the current box behaviour. Unsafe code wants to use box, and it is reaso
 remove all uniqueness from `Box<T>`, and treat it just like a `*const T` for the purposes of aliasing. This will make it more
 predictable for unsafe code, and comes at none or only a minor performance cost.
 
-But this performance cost may be real, and especially the future can't be certain. I can imagine cases where it would cause
-regressions, but I have an idea for that. If we stabilized the currently perma-unstable `std::ptr::Unique` pointer, and made
-the `noalias` magic apply to it instead, users who have the perf need in special cases could simply use it instead (with the
-extra unsafety that comes from it), and normal code would be able to keep box as usual. That would lead to all standard library
-uses of `Unique` having to be changed away from it though. This also plays better with the Rust philosophy of "Safe By Default", which is underrepresented in unsafe Rust code anyways. People have told me that `&'static mut` that is leaked and later unleaked
-could have the same role. This could also be a reasonable solution, and keep `Unique` private.
+But this performance cost may be real, and especially the future optimization value can't be certain. I do think that there
+should be a way to get the uniqueness guarantees in some other way than through box. One possibility would be to use a `&'static mut T` that is unleaked for drop, but the semantics of this are still [unclear](https://github.com/rust-lang/unsafe-code-guidelines/issues/316). If that is not possible, maybe exposing `std::ptr::Unique` (with it getting boxes aliasing semantics) could be desirable. For this, all existing usages of `Unique` inside the standard library would have to be removed though.
 
-But first of all, I think we should at least remove `noalias` from `Box<T>`, and see if there's any user feedback regarding perf.
-This would temporarily at least LLVM UB from invalid uses, but keep the SB UB. Then, later, we can remove it altogether.
-
-For a better and more aliasable future!
+I guess what I am wishing for are some good and flexible raw pointer types. That's still in the stars...
 
 For more information about this topic, see https://github.com/rust-lang/unsafe-code-guidelines/issues/326
