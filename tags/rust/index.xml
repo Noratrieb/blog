@@ -66,6 +66,7 @@ belong to the arcane circles of the select few who were aware of it. So lots of 
 RAII pointer&amp;rdquo; (a pointer that allocates the value in the constructor, and deallocates it in the destructor on drop) for all
 pointers are concerned.&lt;/p>
 &lt;h1 id="stacked-borrows-and-miri">Stacked Borrows and Miri&lt;/h1>
+&lt;p>TODO: introduce UB by explaining how it allows optimizations like the one above, don&amp;rsquo;t talk in standardese&lt;/p>
 &lt;p>&lt;a href="https://github.com/rust-lang/miri">Miri&lt;/a> is an interpreter for Rust code with the goal of finding undefined behaviour.
 Undefined behaviour, UB for short, is behaviour of a program upon which no restrictions are imposed. If UB is executed,
 &lt;em>anything&lt;/em> can happen, including segmentation faults, silent memory corruption, leakage of private keys or exactly
@@ -104,11 +105,10 @@ note: inside `main` at src/main.rs:12:5
 | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 &lt;/code>&lt;/pre>&lt;p>This behaviour does indeed not look very defined at all. But what went wrong? There&amp;rsquo;s a lot of information here.&lt;/p>
 &lt;p>First of all, it says that we attempted a read access, and that this access failed because the tag does not exist in the
-borrow stack. This is something about stacked borrows, the experimental memory model for Rust that is implemented
-in Miri. For an excellent introduction, see this part of the great book &lt;a href="https://rust-unofficial.github.io/too-many-lists/fifth-stacked-borrows.html">Learning Rust With Entirely Too Many Linked Lists&lt;/a>.&lt;/p>
-&lt;p>In short: each pointer has a unique tag attacked to it. Bytes in memory have a stack of such tags, and only the pointers
-that have their tag in the stack are allowed to access it. Tags can be pushed and popped from the stack through various
-operations, for example borrowing.&lt;/p>
+borrow stack of the byte that was accessed. This is something about stacked borrows, the experimental memory model for Rust
+that is implemented in Miri. For an excellent introduction, see this part of the great book &lt;a href="https://rust-unofficial.github.io/too-many-lists/fifth-stacked-borrows.html">Learning Rust With Entirely Too Many Linked Lists&lt;/a>.&lt;/p>
+&lt;p>In short: each pointer has a unique tag attached to it. Each byte in memory has its own &amp;lsquo;borrow stack&amp;rsquo; of these tags,
+and only the pointers that have their tag in the stack are allowed to access it. Tags can be pushed and popped from the stack through various operations, for example borrowing.&lt;/p>
 &lt;p>In the code example above, we get a nice little hint where the tag was created. When we created a reference (that was then
 coerced into a raw pointer) from our box, it got a new tag called &lt;code>&amp;lt;3314&amp;gt;&lt;/code>. Then, when we moved the box into the function,
 something happened: The tag was invalidated and popped off the borrow stack. That&amp;rsquo;s because box invalidates all tags when it&amp;rsquo;s
