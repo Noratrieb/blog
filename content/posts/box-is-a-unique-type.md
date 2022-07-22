@@ -104,6 +104,8 @@ pointers are concerned.
 
 # Stacked Borrows and Miri
 
+TODO: introduce UB by explaining how it allows optimizations like the one above, don't talk in standardese
+
 [Miri](https://github.com/rust-lang/miri) is an interpreter for Rust code with the goal of finding undefined behaviour.
 Undefined behaviour, UB for short, is behaviour of a program upon which no restrictions are imposed. If UB is executed,
 _anything_ can happen, including segmentation faults, silent memory corruption, leakage of private keys or exactly
@@ -149,12 +151,11 @@ note: inside `main` at src/main.rs:12:5
 This behaviour does indeed not look very defined at all. But what went wrong? There's a lot of information here.
 
 First of all, it says that we attempted a read access, and that this access failed because the tag does not exist in the
-borrow stack. This is something about stacked borrows, the experimental memory model for Rust that is implemented
-in Miri. For an excellent introduction, see this part of the great book [Learning Rust With Entirely Too Many Linked Lists](https://rust-unofficial.github.io/too-many-lists/fifth-stacked-borrows.html).
+borrow stack of the byte that was accessed. This is something about stacked borrows, the experimental memory model for Rust
+that is implemented in Miri. For an excellent introduction, see this part of the great book [Learning Rust With Entirely Too Many Linked Lists](https://rust-unofficial.github.io/too-many-lists/fifth-stacked-borrows.html).
 
-In short: each pointer has a unique tag attacked to it. Bytes in memory have a stack of such tags, and only the pointers
-that have their tag in the stack are allowed to access it. Tags can be pushed and popped from the stack through various
-operations, for example borrowing.
+In short: each pointer has a unique tag attached to it. Each byte in memory has its own 'borrow stack' of these tags,
+and only the pointers that have their tag in the stack are allowed to access it. Tags can be pushed and popped from the stack through various operations, for example borrowing.
 
 In the code example above, we get a nice little hint where the tag was created. When we created a reference (that was then
 coerced into a raw pointer) from our box, it got a new tag called `<3314>`. Then, when we moved the box into the function,
