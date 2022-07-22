@@ -51,7 +51,7 @@ reveals the solution: (severely shortened to only show the relevant parts)&lt;/p
 &lt;pre tabindex="0">&lt;code class="language-llvmir" data-lang="llvmir">define void @takes_box_and_ptr_to_it(i8* noalias %0, i8* %ptr) {
 &lt;/code>&lt;/pre>&lt;p>See the little attribute on the first parameter called &lt;code>noalias&lt;/code>? That&amp;rsquo;s what&amp;rsquo;s doing the magic here.
 &lt;code>noalias&lt;/code> is an LLVM attribute on pointers that allows for various optimizations. If there are two pointers,
-and at least one of them is &lt;code>noalias&lt;/code>, there are some restrictions around the two:&lt;/p>
+and at least one of them is &lt;code>noalias&lt;/code>, there are some restrictions around the two. Approximately:&lt;/p>
 &lt;ul>
 &lt;li>If one of them writes, they must not point to the same value (alias each other)&lt;/li>
 &lt;li>If neither of them writes, they can alias just fine.
@@ -66,7 +66,7 @@ belong to the arcane circles of the select few who were aware of it. So lots of 
 RAII pointer&amp;rdquo; (a pointer that allocates the value in the constructor, and deallocates it in the destructor on drop) for all
 pointers are concerned.&lt;/p>
 &lt;h1 id="stacked-borrows-and-miri">Stacked Borrows and Miri&lt;/h1>
-&lt;p>&lt;a href="https://github.com/rust-lang/miri">Miri&lt;/a> is an interpreter for Rust code with the goal of finding undefinde behaviour.
+&lt;p>&lt;a href="https://github.com/rust-lang/miri">Miri&lt;/a> is an interpreter for Rust code with the goal of finding undefined behaviour.
 Undefined behaviour, UB for short, is behaviour of a program upon which no restrictions are imposed. If UB is executed,
 &lt;em>anything&lt;/em> can happen, including segmentation faults, silent memory corruption, leakage of private keys or exactly
 what you intended to happen. Examples of UB include use-after-free, out of bounds reads or data races.&lt;/p>
