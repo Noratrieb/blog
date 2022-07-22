@@ -111,8 +111,8 @@ that is implemented in Miri. For an excellent introduction, see this part of the
 and only the pointers that have their tag in the stack are allowed to access it. Tags can be pushed and popped from the stack through various operations, for example borrowing.&lt;/p>
 &lt;p>In the code example above, we get a nice little hint where the tag was created. When we created a reference (that was then
 coerced into a raw pointer) from our box, it got a new tag called &lt;code>&amp;lt;3314&amp;gt;&lt;/code>. Then, when we moved the box into the function,
-something happened: The tag was invalidated and popped off the borrow stack. That&amp;rsquo;s because box invalidates all tags when it&amp;rsquo;s
-moved. The tag was popped off the borrow stack and we tried to read from it anyways - undefined behaviour happened!&lt;/p>
+something happened: The tag was popped off the borrow stack and therefore invalidated. That&amp;rsquo;s because box invalidates all tags
+when it&amp;rsquo;s moved. The tag was popped off the borrow stack and we tried to read with it anyways - undefined behaviour happened!&lt;/p>
 &lt;p>And that&amp;rsquo;s how our code wasn&amp;rsquo;t a miscompilation, but undefined behaviour. Quite surprising, isn&amp;rsquo;t it?&lt;/p>
 &lt;h1 id="noalias-nothanks">noalias, nothanks&lt;/h1>
 &lt;p>Many people, myself included, don&amp;rsquo;t think that this is a good thing.&lt;/p>
