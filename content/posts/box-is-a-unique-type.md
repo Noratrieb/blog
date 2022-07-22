@@ -87,7 +87,7 @@ define void @takes_box_and_ptr_to_it(i8* noalias %0, i8* %ptr) {
 
 See the little attribute on the first parameter called `noalias`? That's what's doing the magic here.
 `noalias` is an LLVM attribute on pointers that allows for various optimizations. If there are two pointers,
-and at least one of them is `noalias`, there are some restrictions around the two:
+and at least one of them is `noalias`, there are some restrictions around the two. Approximately:
 - If one of them writes, they must not point to the same value (alias each other)
 - If neither of them writes, they can alias just fine.
 Therefore, we also apply `noalias` to `&mut T` and `&T` (if it doesn't contain interior mutability through 
