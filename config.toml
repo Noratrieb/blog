@@ -2,3 +2,11 @@ baseURL = "/"
 languageCode = "en-us"
 title = "nilstriebs blog"
 theme = "terminal"
+
+[params]
+contentTypeName = "posts"
+themeColor = "orange"
+centerTheme = true
+
+[params.logo]
+logoText = "nilstriebs blog"
