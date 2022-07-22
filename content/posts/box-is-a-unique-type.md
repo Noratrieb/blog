@@ -159,8 +159,8 @@ and only the pointers that have their tag in the stack are allowed to access it.
 
 In the code example above, we get a nice little hint where the tag was created. When we created a reference (that was then
 coerced into a raw pointer) from our box, it got a new tag called `<3314>`. Then, when we moved the box into the function,
-something happened: The tag was invalidated and popped off the borrow stack. That's because box invalidates all tags when it's
-moved. The tag was popped off the borrow stack and we tried to read from it anyways - undefined behaviour happened!
+something happened: The tag was popped off the borrow stack and therefore invalidated. That's because box invalidates all tags 
+when it's moved. The tag was popped off the borrow stack and we tried to read with it anyways - undefined behaviour happened!
 
 And that's how our code wasn't a miscompilation, but undefined behaviour. Quite surprising, isn't it?
 
