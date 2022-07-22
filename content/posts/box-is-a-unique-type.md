@@ -86,16 +86,20 @@ define void @takes_box_and_ptr_to_it(i8* noalias %0, i8* %ptr) {
 ```
 
 See the little attribute on the first parameter called `noalias`? That's what's doing the magic here.
-`noalias` is quite complex, but for our case here, it says that no other pointers point to (alias) the same location.
-This allows the optimizer to assume that writing to the box pointer doesn't affect the other pointer - they are
-not allowed to alias (it's like if they used `restrict` in C).
+`noalias` is an LLVM attribute on pointers that allows for various optimizations. If there are two pointers,
+and at least one of them is `noalias`, there are some restrictions around the two:
+- If one of them writes, they must not point to the same value (alias each other)
+- If neither of them writes, they can alias just fine.
+Therefore, we also apply `noalias` to `&mut T` and `&T` (if it doesn't contain interior mutability through 
+`UnsafeCell<T>`, since they uphold these rules.
 
 This might sound familiar to you if you're a viewer of [Jon Gjengset](https://twitter.com/jonhoo)'s content (which I can highly recommend). Jon has made an entire video about this before, since his crate `left-right`
 was affected by this (https://youtu.be/EY7Wi9fV5bk).
 
 If you're looking for _any_ hint that using box emits `noalias`, you have to look no further than the documentation
 for [`std::boxed`](https://doc.rust-lang.org/nightly/std/boxed/index.html#considerations-for-unsafe-code). Well, the nightly or beta docs, because I only added this section very recently. For years, this behaviour was not really documented, and you had to
-belong to the arcane circles of the select few who were aware of it. So lots of code was written thinking that box was "just a RAII pointer" (a pointer that allocates the value in the constructor, and deallocates it in the destructor on drop) for all
+belong to the arcane circles of the select few who were aware of it. So lots of code was written thinking that box was "just an
+RAII pointer" (a pointer that allocates the value in the constructor, and deallocates it in the destructor on drop) for all
 pointers are concerned.
 
 # Stacked Borrows and Miri
