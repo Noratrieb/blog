@@ -50,14 +50,20 @@ well here. But what allows it to make this optimization? Taking a look at the ge
 reveals the solution: (severely shortened to only show the relevant parts)&lt;/p>
 &lt;pre tabindex="0">&lt;code class="language-llvmir" data-lang="llvmir">define void @takes_box_and_ptr_to_it(i8* noalias %0, i8* %ptr) {
 &lt;/code>&lt;/pre>&lt;p>See the little attribute on the first parameter called &lt;code>noalias&lt;/code>? That&amp;rsquo;s what&amp;rsquo;s doing the magic here.
-&lt;code>noalias&lt;/code> is quite complex, but for our case here, it says that no other pointers point to (alias) the same location.
-This allows the optimizer to assume that writing to the box pointer doesn&amp;rsquo;t affect the other pointer - they are
-not allowed to alias (it&amp;rsquo;s like if they used &lt;code>restrict&lt;/code> in C).&lt;/p>
+&lt;code>noalias&lt;/code> is an LLVM attribute on pointers that allows for various optimizations. If there are two pointers,
+and at least one of them is &lt;code>noalias&lt;/code>, there are some restrictions around the two:&lt;/p>
+&lt;ul>
+&lt;li>If one of them writes, they must not point to the same value (alias each other)&lt;/li>
+&lt;li>If neither of them writes, they can alias just fine.
+Therefore, we also apply &lt;code>noalias&lt;/code> to &lt;code>&amp;amp;mut T&lt;/code> and &lt;code>&amp;amp;T&lt;/code> (if it doesn&amp;rsquo;t contain interior mutability through
+&lt;code>UnsafeCell&amp;lt;T&amp;gt;&lt;/code>, since they uphold these rules.&lt;/li>
+&lt;/ul>
 &lt;p>This might sound familiar to you if you&amp;rsquo;re a viewer of &lt;a href="https://twitter.com/jonhoo">Jon Gjengset&lt;/a>&amp;rsquo;s content (which I can highly recommend). Jon has made an entire video about this before, since his crate &lt;code>left-right&lt;/code>
 was affected by this (&lt;a href="https://youtu.be/EY7Wi9fV5bk)">https://youtu.be/EY7Wi9fV5bk)&lt;/a>.&lt;/p>
 &lt;p>If you&amp;rsquo;re looking for &lt;em>any&lt;/em> hint that using box emits &lt;code>noalias&lt;/code>, you have to look no further than the documentation
 for &lt;a href="https://doc.rust-lang.org/nightly/std/boxed/index.html#considerations-for-unsafe-code">&lt;code>std::boxed&lt;/code>&lt;/a>. Well, the nightly or beta docs, because I only added this section very recently. For years, this behaviour was not really documented, and you had to
-belong to the arcane circles of the select few who were aware of it. So lots of code was written thinking that box was &amp;ldquo;just a RAII pointer&amp;rdquo; (a pointer that allocates the value in the constructor, and deallocates it in the destructor on drop) for all
+belong to the arcane circles of the select few who were aware of it. So lots of code was written thinking that box was &amp;ldquo;just an
+RAII pointer&amp;rdquo; (a pointer that allocates the value in the constructor, and deallocates it in the destructor on drop) for all
 pointers are concerned.&lt;/p>
 &lt;h1 id="stacked-borrows-and-miri">Stacked Borrows and Miri&lt;/h1>
 &lt;p>&lt;a href="https://github.com/rust-lang/miri">Miri&lt;/a> is an interpreter for Rust code with the goal of finding undefinde behaviour.
