@@ -212,7 +212,7 @@ There is one clear potential benefit from this box behaviour: âœ¨Optimizationsâœ
 that can bring clear performance wins (for `noalias` on `&mut T`, those were   measureable). So the only question remains:
 **How much performance does `noalias` on `Box<T>` give us now, and how many potential performance improvements could we get in the 
 future?** For the latter, there is no simple answer. For the former, there is. `rustc` has [_no_ performance improvements](https://github.com/rust-lang/rust/pull/99527) 
-from being compiled with `noalias` on `Box<T>`.
+from being compiled with `noalias` on `Box<T>`, but this isn't really representative since rustc mostly uses arenas instead of box internally.
 
 I have also benchmarked a few crates from the ecosystem with and without noalias on box, and the [results](https://gist.github.com/Nilstrieb/9a0751fb9fd1044a30ab55cef9a7d335)
 were inconclusive. (At the time of writing, only regex-syntax, tokio, and syn have been benchmarked.) regex-syntax showed no changes. Tokio showed a few improvements without noalias
