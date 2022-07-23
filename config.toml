@@ -3,6 +3,9 @@ languageCode = "en-us"
 title = "nilstriebs blog"
 theme = "terminal"
 
+[author]
+name = "Nilstrieb"
+
 [params]
 contentTypeName = "posts"
 themeColor = "orange"
