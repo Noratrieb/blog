@@ -153,7 +153,7 @@ don&amp;rsquo;t think this can reasonable be changed.&lt;/p>
 that can bring clear performance wins (for &lt;code>noalias&lt;/code> on &lt;code>&amp;amp;mut T&lt;/code>, those were measureable). So the only question remains:
 &lt;strong>How much performance does &lt;code>noalias&lt;/code> on &lt;code>Box&amp;lt;T&amp;gt;&lt;/code> give us now, and how many potential performance improvements could we get in the
 future?&lt;/strong> For the latter, there is no simple answer. For the former, there is. &lt;code>rustc&lt;/code> has &lt;a href="https://github.com/rust-lang/rust/pull/99527">&lt;em>no&lt;/em> performance improvements&lt;/a>
-from being compiled with &lt;code>noalias&lt;/code> on &lt;code>Box&amp;lt;T&amp;gt;&lt;/code>.&lt;/p>
+from being compiled with &lt;code>noalias&lt;/code> on &lt;code>Box&amp;lt;T&amp;gt;&lt;/code>, but this isn&amp;rsquo;t really representative since rustc mostly uses arenas instead of box internally.&lt;/p>
 &lt;p>I have also benchmarked a few crates from the ecosystem with and without noalias on box, and the &lt;a href="https://gist.github.com/Nilstrieb/9a0751fb9fd1044a30ab55cef9a7d335">results&lt;/a>
 were inconclusive. (At the time of writing, only regex-syntax, tokio, and syn have been benchmarked.) regex-syntax showed no changes. Tokio showed a few improvements without noalias
 which is very weird, so maybe the benchmarks aren&amp;rsquo;t really good or something else was going on. And syn tended towards minor regressions without noalias, but the benchmarks had high
