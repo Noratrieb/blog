@@ -106,15 +106,14 @@ pointers are concerned.
 
 # Stacked Borrows and Miri
 
-TODO: introduce UB by explaining how it allows optimizations like the one above, don't talk in standardese
+So, LLVM was completely correct in optimizing our code to make the assert fail. But what exactly gave it permission to do so?
+Undefined Behaviour (UB for short). Undefined behaviour is at the root of many modern compiler optimizations. But what is undefined behaviour?
+UB represents a contract between the program and the compiler. The compiler assumes that UB will not happen, and can therefore optimize based
+on these assumptions. Examples of UB also include use-after-free, out of bounds reads or data races. If UB is executed, _anything_ can happen,
+including segmentation faults, silent memory corruption, leakage of private keys or exactly what you intended to happen.
 
-[Miri](https://github.com/rust-lang/miri) is an interpreter for Rust code with the goal of finding undefined behaviour.
-Undefined behaviour, UB for short, is behaviour of a program upon which no restrictions are imposed. If UB is executed,
-_anything_ can happen, including segmentation faults, silent memory corruption, leakage of private keys or exactly
-what you intended to happen. Examples of UB include use-after-free, out of bounds reads or data races.
-
-I cannot recommend Miri highly enough for all unsafe code you're writing (sadly support for some IO functions
-and FFI is still lacking, and it's still very slow).
+[Miri](https://github.com/rust-lang/miri) is an interpreter for Rust code with the goal of finding undefined behaviour in Rust. I cannot recommend Miri
+highly enough for all unsafe code you're writing (sadly support for some IO functions and FFI is still lacking, and it's still very slow).
 
 So, let's see whether our code contains UB. It has to, since otherwise the optimizer wouldn't be allowed to change
 observable behaviour (since the assert doesn't fail in debug mode). `$ cargo miri run`...
