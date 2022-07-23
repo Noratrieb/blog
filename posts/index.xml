@@ -56,8 +56,9 @@ and at least one of them is &lt;code>noalias&lt;/code>, there are some restricti
 &lt;li>If one of them writes, they must not point to the same value (alias each other)&lt;/li>
 &lt;li>If neither of them writes, they can alias just fine.
 Therefore, we also apply &lt;code>noalias&lt;/code> to &lt;code>&amp;amp;mut T&lt;/code> and &lt;code>&amp;amp;T&lt;/code> (if it doesn&amp;rsquo;t contain interior mutability through
-&lt;code>UnsafeCell&amp;lt;T&amp;gt;&lt;/code>, since they uphold these rules.&lt;/li>
+&lt;code>UnsafeCell&amp;lt;T&amp;gt;&lt;/code>), since they uphold these rules.&lt;/li>
 &lt;/ul>
+&lt;p>For more info on &lt;code>noalias&lt;/code>, see &lt;a href="https://llvm.org/docs/LangRef.html#parameter-attributes">LLVMs LangRef&lt;/a>.&lt;/p>
 &lt;p>This might sound familiar to you if you&amp;rsquo;re a viewer of &lt;a href="https://twitter.com/jonhoo">Jon Gjengset&lt;/a>&amp;rsquo;s content (which I can highly recommend). Jon has made an entire video about this before, since his crate &lt;code>left-right&lt;/code>
 was affected by this (&lt;a href="https://youtu.be/EY7Wi9fV5bk)">https://youtu.be/EY7Wi9fV5bk)&lt;/a>.&lt;/p>
 &lt;p>If you&amp;rsquo;re looking for &lt;em>any&lt;/em> hint that using box emits &lt;code>noalias&lt;/code>, you have to look no further than the documentation
@@ -66,13 +67,13 @@ belong to the arcane circles of the select few who were aware of it. So lots of 
 RAII pointer&amp;rdquo; (a pointer that allocates the value in the constructor, and deallocates it in the destructor on drop) for all
 pointers are concerned.&lt;/p>
 &lt;h1 id="stacked-borrows-and-miri">Stacked Borrows and Miri&lt;/h1>
-&lt;p>TODO: introduce UB by explaining how it allows optimizations like the one above, don&amp;rsquo;t talk in standardese&lt;/p>
-&lt;p>&lt;a href="https://github.com/rust-lang/miri">Miri&lt;/a> is an interpreter for Rust code with the goal of finding undefined behaviour.
-Undefined behaviour, UB for short, is behaviour of a program upon which no restrictions are imposed. If UB is executed,
-&lt;em>anything&lt;/em> can happen, including segmentation faults, silent memory corruption, leakage of private keys or exactly
-what you intended to happen. Examples of UB include use-after-free, out of bounds reads or data races.&lt;/p>
-&lt;p>I cannot recommend Miri highly enough for all unsafe code you&amp;rsquo;re writing (sadly support for some IO functions
-and FFI is still lacking, and it&amp;rsquo;s still very slow).&lt;/p>
+&lt;p>So, LLVM was completely correct in optimizing our code to make the assert fail. But what exactly gave it permission to do so?
+Undefined Behaviour (UB for short). Undefined behaviour is at the root of many modern compiler optimizations. But what is undefined behaviour?
+UB represents a contract between the program and the compiler. The compiler assumes that UB will not happen, and can therefore optimize based
+on these assumptions. Examples of UB also include use-after-free, out of bounds reads or data races. If UB is executed, &lt;em>anything&lt;/em> can happen,
+including segmentation faults, silent memory corruption, leakage of private keys or exactly what you intended to happen.&lt;/p>
+&lt;p>&lt;a href="https://github.com/rust-lang/miri">Miri&lt;/a> is an interpreter for Rust code with the goal of finding undefined behaviour in Rust. I cannot recommend Miri
+highly enough for all unsafe code you&amp;rsquo;re writing (sadly support for some IO functions and FFI is still lacking, and it&amp;rsquo;s still very slow).&lt;/p>
 &lt;p>So, let&amp;rsquo;s see whether our code contains UB. It has to, since otherwise the optimizer wouldn&amp;rsquo;t be allowed to change
 observable behaviour (since the assert doesn&amp;rsquo;t fail in debug mode). &lt;code>$ cargo miri run&lt;/code>&amp;hellip;&lt;/p>
 &lt;pre tabindex="0">&lt;code class="language-rust,ignore" data-lang="rust,ignore">error: Undefined Behavior: attempting a read access using &amp;lt;3314&amp;gt; at alloc1722[0x0], but that tag does not exist in the borrow stack for this location
@@ -137,29 +138,36 @@ other box-exclusive features it offers. Even worse is &lt;code>string_cache&lt;/
 &lt;p>Then last but not least, there&amp;rsquo;s the opinionated fact that &lt;code>Box&amp;lt;T&amp;gt;&lt;/code> shall be implementable entirely in user code. While we are
 many missing language features away from this being the case, the &lt;code>noalias&lt;/code> case is also magic descended upon box itself, with no
 user code ever having access to it.&lt;/p>
-&lt;p>There are also several arguments in favour of box being unique and special cased here. To negate the last argument above, it can
+&lt;p>There are several arguments in favour of box being unique and special cased here. To negate the last argument above, it can
 be said that &lt;code>Box&amp;lt;T&amp;gt;&lt;/code> &lt;em>is&lt;/em> a very special type. It&amp;rsquo;s just like a &lt;code>T&lt;/code>, but on the heap. Using this mental model, it&amp;rsquo;s very easy to
 justify all the box magic and its unique behaviour. But in my opinion, this is not a useful mental model regarding unsafe code,
 and I prefer the mental model of &amp;ldquo;reference that manages its own lifetime&amp;rdquo;, which doesn&amp;rsquo;t imply uniqueness.&lt;/p>
+&lt;p>But there are also crates on &lt;a href="https://crates.io/">crates.io&lt;/a> like &lt;a href="https://crates.io/crates/aliasable">aliasable&lt;/a> that already
+provide an aliasable version of &lt;code>Box&amp;lt;T&amp;gt;&lt;/code>, which is used by the self-referential type helper crate &lt;a href="https://crates.io/crates/ouroboros">ouroboros&lt;/a>.
+So if box stayed unique, people could also just pick up that crate as a dependency and use the aliasable box from there instead of
+having to write their own. Interestingly, this crate also provides a &lt;code>Vec&amp;lt;T&amp;gt;&lt;/code>, even though &lt;code>Vec&amp;lt;T&amp;gt;&lt;/code> can currently be aliased in practice and
+in the current version of stacked borrows. just fine, although it&amp;rsquo;s also not clear whether we want to keep it like this, but I
+don&amp;rsquo;t think this can reasonable be changed.&lt;/p>
 &lt;h1 id="noalias-noslow">noalias, noslow&lt;/h1>
 &lt;p>There is one clear potential benefit from this box behaviour: ✨Optimizations✨. &lt;code>noalias&lt;/code> doesn&amp;rsquo;t exist for fun, it&amp;rsquo;s something
 that can bring clear performance wins (for &lt;code>noalias&lt;/code> on &lt;code>&amp;amp;mut T&lt;/code>, those were measureable). So the only question remains:
 &lt;strong>How much performance does &lt;code>noalias&lt;/code> on &lt;code>Box&amp;lt;T&amp;gt;&lt;/code> give us now, and how many potential performance improvements could we get in the
 future?&lt;/strong> For the latter, there is no simple answer. For the former, there is. &lt;code>rustc&lt;/code> has &lt;a href="https://github.com/rust-lang/rust/pull/99527">&lt;em>no&lt;/em> performance improvements&lt;/a>
 from being compiled with &lt;code>noalias&lt;/code> on &lt;code>Box&amp;lt;T&amp;gt;&lt;/code>.&lt;/p>
-&lt;p>I have not yet benchmarked ecosystem crates without box noalias and don&amp;rsquo;t have the capacity to do so right now, so I would be very
-grateful if anyone wanted to pick that up and report the results.&lt;/p>
-&lt;p>There are also crates on &lt;a href="https://crates.io/">crates.io&lt;/a> like &lt;a href="https://crates.io/crates/aliasable">aliasable&lt;/a> that already
-provide an aliasable version of &lt;code>Box&amp;lt;T&amp;gt;&lt;/code>, which is used by the self-referential type helper crate &lt;a href="https://crates.io/crates/ouroboros">ouroboros&lt;/a>.&lt;/p>
+&lt;p>I have also benchmarked a few crates from the ecosystem with and without noalias on box, and the &lt;a href="https://gist.github.com/Nilstrieb/9a0751fb9fd1044a30ab55cef9a7d335">results&lt;/a>
+were inconclusive. (At the time of writing, only regex-syntax, tokio, and syn have been benchmarked.) regex-syntax showed no changes. Tokio showed a few improvements without noalias
+which is very weird, so maybe the benchmarks aren&amp;rsquo;t really good or something else was going on. And syn tended towards minor regressions without noalias, but the benchmarks had high
+jitter so no real conclusion can be reached from this either, at least in my eyes, but I don&amp;rsquo;t have a lot of experience with benchmarks. Therefore, I would love for more people
+to benchmark more crates, especially if you have more experience with benchmarks.&lt;/p>
 &lt;h1 id="a-way-forward">a way forward&lt;/h1>
-&lt;p>Based on all of this, I do have a few solutions. First of all, I think that even if there might be some small performance regressions in ecosystem crates,
-the overall tradeoff goes against the current box behaviour. Unsafe code wants to use box, and it is reasonable to do so. Therefore I propose to completely
-remove all uniqueness from &lt;code>Box&amp;lt;T&amp;gt;&lt;/code>, and treat it just like a &lt;code>*const T&lt;/code> for the purposes of aliasing. This will make it more
-predictable for unsafe code, and comes at none or only a minor performance cost.&lt;/p>
-&lt;p>But this performance cost may be real, and especially the future optimization value can&amp;rsquo;t be certain. The current uniqueness guarantees of box
+&lt;p>Based on all of this, I do have a few solutions. First of all, I think that even if there might be some small performance regressions, they are not significant enough
+to justify boxes uniqueness. Unsafe code wants to use box, and it is reasonable to do so. Therefore I propose to completely remove all uniqueness from &lt;code>Box&amp;lt;T&amp;gt;&lt;/code>, and treat it
+just like a &lt;code>*const T&lt;/code> for the purposes of aliasing. This will make it more predictable for unsafe code, and is a step forward towards less magic from &lt;code>Box&amp;lt;T&amp;gt;&lt;/code>.&lt;/p>
+&lt;p>But the performance cost may be real, and especially the future optimization value can&amp;rsquo;t be certain. The current uniqueness guarantees of box
 are very strong, and still giving code an option to obtain these seems useful. One possibility would be for code to use a
 &lt;code>&amp;amp;'static mut T&lt;/code> that is unleaked for drop, but the semantics of this are still &lt;a href="https://github.com/rust-lang/unsafe-code-guidelines/issues/316">unclear&lt;/a>.
 If that is not possible, exposing &lt;code>std::ptr::Unique&lt;/code> (with it getting boxes aliasing semantics) could be desirable. For this, all existing usages of &lt;code>Unique&lt;/code>
-inside the standard library would have to be removed.&lt;/p>
+inside the standard library would have to be removed. We could also offer a &lt;code>std::boxed::UniqueBox&lt;/code> that keeps the current semantics, but this would also bring direct aliasing
+decisions more towards safe code, which I am not a huge fan of. Ownership is enough already.&lt;/p>
 &lt;p>I guess what I am wishing for are some good and flexible raw pointer types. But that&amp;rsquo;s still in the stars&amp;hellip;&lt;/p>
 &lt;p>For more information about this topic, see &lt;a href="https://github.com/rust-lang/unsafe-code-guidelines/issues/326">https://github.com/rust-lang/unsafe-code-guidelines/issues/326&lt;/a>&lt;/p></content></item></channel></rss>
