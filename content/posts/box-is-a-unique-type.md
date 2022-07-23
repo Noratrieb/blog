@@ -91,7 +91,9 @@ and at least one of them is `noalias`, there are some restrictions around the tw
 - If one of them writes, they must not point to the same value (alias each other)
 - If neither of them writes, they can alias just fine.
 Therefore, we also apply `noalias` to `&mut T` and `&T` (if it doesn't contain interior mutability through 
-`UnsafeCell<T>`, since they uphold these rules.
+`UnsafeCell<T>`), since they uphold these rules.
+
+For more info on `noalias`, see [LLVMs LangRef](https://llvm.org/docs/LangRef.html#parameter-attributes).
 
 This might sound familiar to you if you're a viewer of [Jon Gjengset](https://twitter.com/jonhoo)'s content (which I can highly recommend). Jon has made an entire video about this before, since his crate `left-right`
 was affected by this (https://youtu.be/EY7Wi9fV5bk).
@@ -194,7 +196,7 @@ Then last but not least, there's the opinionated fact that `Box<T>` shall be imp
 many missing language features away from this being the case, the `noalias` case is also magic descended upon box itself, with no
 user code ever having access to it.
 
-There are also several arguments in favour of box being unique and special cased here. To negate the last argument above, it can
+There are several arguments in favour of box being unique and special cased here. To negate the last argument above, it can
 be said that `Box<T>` _is_ a very special type. It's just like a `T`, but on the heap. Using this mental model, it's very easy to
 justify all the box magic and its unique behaviour. But in my opinion, this is not a useful mental model regarding unsafe code,
 and I prefer the mental model of "reference that manages its own lifetime", which doesn't imply uniqueness.
@@ -203,7 +205,8 @@ But there are also crates on [crates.io](https://crates.io/) like [aliasable](ht
 provide an aliasable version of `Box<T>`, which is used by the self-referential type helper crate [ouroboros](https://crates.io/crates/ouroboros).
 So if box stayed unique, people could also just pick up that crate as a dependency and use the aliasable box from there instead of
 having to write their own. Interestingly, this crate also provides a `Vec<T>`, even though `Vec<T>` can currently be aliased in practice and
-in the current version of stacked borrows. just fine, although it's also not clear whether we want to keep it like this.
+in the current version of stacked borrows. just fine, although it's also not clear whether we want to keep it like this, but I
+don't think this can reasonable be changed.
 
 # noalias, noslow
 
@@ -222,7 +225,7 @@ to benchmark more crates, especially if you have more experience with benchmarks
 # a way forward
 
 Based on all of this, I do have a few solutions. First of all, I think that even if there might be some small performance regressions, they are not significant enough
-to justify it. Unsafe code wants to use box, and it is reasonable to do so. Therefore I propose to completely remove all uniqueness from `Box<T>`, and treat it
+to justify boxes uniqueness. Unsafe code wants to use box, and it is reasonable to do so. Therefore I propose to completely remove all uniqueness from `Box<T>`, and treat it
 just like a `*const T` for the purposes of aliasing. This will make it more predictable for unsafe code, and is a step forward towards less magic from `Box<T>`.
 
 But the performance cost may be real, and especially the future optimization value can't be certain. The current uniqueness guarantees of box
