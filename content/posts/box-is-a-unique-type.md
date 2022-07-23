@@ -13,7 +13,7 @@ draft = false
 +++
 
 We have all used `Box<T>` before in our Rust code. It's a glorious type, with great ergonomics
-and flexibitility. We can use it to put our values on the heap, but it can do even more
+and flexibility. We can use it to put our values on the heap, but it can do even more
 than that!
 
 ```rust
