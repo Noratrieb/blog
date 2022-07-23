@@ -237,3 +237,5 @@ decisions more towards safe code, which I am not a huge fan of. Ownership is eno
 I guess what I am wishing for are some good and flexible raw pointer types. But that's still in the stars...
 
 For more information about this topic, see https://github.com/rust-lang/unsafe-code-guidelines/issues/326
+
+_Thanks to the nice people on the Rust Community Discord for their feedback on the draft of this post!_
