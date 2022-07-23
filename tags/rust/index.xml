@@ -148,6 +148,11 @@ So if box stayed unique, people could also just pick up that crate as a dependen
 having to write their own. Interestingly, this crate also provides a &lt;code>Vec&amp;lt;T&amp;gt;&lt;/code>, even though &lt;code>Vec&amp;lt;T&amp;gt;&lt;/code> can currently be aliased in practice and
 in the current version of stacked borrows. just fine, although it&amp;rsquo;s also not clear whether we want to keep it like this, but I
 don&amp;rsquo;t think this can reasonable be changed.&lt;/p>
+&lt;blockquote>
+&lt;p>One thing was just pointed out to me after releasing the post: Mutation usually goes through &lt;code>&amp;amp;mut T&lt;/code> anyways, even when the value
+is stored as a &lt;code>Box&amp;lt;T&amp;gt;&lt;/code>. Therefore, all the guarantees of uniqueness are already present when mutating boxes, making the uniqueness
+of box even less important.&lt;/p>
+&lt;/blockquote>
 &lt;h1 id="noalias-noslow">noalias, noslow&lt;/h1>
 &lt;p>There is one clear potential benefit from this box behaviour: ✨Optimizations✨. &lt;code>noalias&lt;/code> doesn&amp;rsquo;t exist for fun, it&amp;rsquo;s something
 that can bring clear performance wins (for &lt;code>noalias&lt;/code> on &lt;code>&amp;amp;mut T&lt;/code>, those were measureable). So the only question remains:
