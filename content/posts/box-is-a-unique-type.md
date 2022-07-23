@@ -3,7 +3,6 @@ title = "Box Is a Unique Type"
 date = "2022-07-22"
 author = "Nilstrieb"
 authorTwitter = "@Nilstrieb"
-cover = ""
 tags = ["rust", "unsafe code"]
 keywords = ["box", "noalias"]
 description = "About better aliasing semantics for `Box<T>`"
