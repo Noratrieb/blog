@@ -201,7 +201,7 @@ and I prefer the mental model of "reference that manages its own lifetime", whic
 
 # noalias, noslow
 
-There is one clear potential benefit from this box behaviour. ✨Optimizations✨. `noalias` doesn't exist for fun, it's something
+There is one clear potential benefit from this box behaviour: ✨Optimizations✨. `noalias` doesn't exist for fun, it's something
 that can bring clear performance wins (for `noalias` on `&mut T`, those were   measureable). So the only question remains:
 **How much performance does `noalias` on `Box<T>` give us now, and how many potential performance improvements could we get in the 
 future?** For the latter, there is no simple answer. For the former, there is. `rustc` has [_no_ performance improvements](https://github.com/rust-lang/rust/pull/99527) 
@@ -215,18 +215,17 @@ provide an aliasable version of `Box<T>`, which is used by the self-referential 
 
 # a way forward
 
-Based on all of this, I do have a solution that, in opinion, will fix all of this, even potential performance regressions with
-box. First of all, I think that even if there are some performance regressions in ecosystem crates, the overall tradeoff goes
-against the current box behaviour. Unsafe code wants to use box, and it is reasonable to do so. Therefore I propose to completely
+Based on all of this, I do have a few solutions. First of all, I think that even if there might be some small performance regressions in ecosystem crates,
+the overall tradeoff goes against the current box behaviour. Unsafe code wants to use box, and it is reasonable to do so. Therefore I propose to completely
 remove all uniqueness from `Box<T>`, and treat it just like a `*const T` for the purposes of aliasing. This will make it more
 predictable for unsafe code, and comes at none or only a minor performance cost.
 
-But this performance cost may be real, and especially the future optimization value can't be certain. I do think that there
-should be a way to get the uniqueness guarantees in some other way than through box. One possibility would be to use a 
+But this performance cost may be real, and especially the future optimization value can't be certain. The current uniqueness guarantees of box
+are very strong, and still giving code an option to obtain these seems useful. One possibility would be for code to use a 
 `&'static mut T` that is unleaked for drop, but the semantics of this are still [unclear](https://github.com/rust-lang/unsafe-code-guidelines/issues/316).
-If that is not possible, maybe exposing `std::ptr::Unique` (with it getting boxes aliasing semantics) could be desirable.
-For this, all existing usages of `Unique` inside the standard library would have to be removed though.
+If that is not possible, exposing `std::ptr::Unique` (with it getting boxes aliasing semantics) could be desirable. For this, all existing usages of `Unique` 
+inside the standard library would have to be removed.
 
-I guess what I am wishing for are some good and flexible raw pointer types. That's still in the stars...
+I guess what I am wishing for are some good and flexible raw pointer types. But that's still in the stars...
 
 For more information about this topic, see https://github.com/rust-lang/unsafe-code-guidelines/issues/326
