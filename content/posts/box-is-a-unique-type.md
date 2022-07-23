@@ -206,6 +206,10 @@ having to write their own. Interestingly, this crate also provides a `Vec<T>`, e
 in the current version of stacked borrows. just fine, although it's also not clear whether we want to keep it like this, but I
 don't think this can reasonable be changed.
 
+> One thing was just pointed out to me after releasing the post: Mutation usually goes through `&mut T` anyways, even when the value
+> is stored as a `Box<T>`. Therefore, all the guarantees of uniqueness are already present when mutating boxes, making the uniqueness
+> of box even less important.
+
 # noalias, noslow
 
 There is one clear potential benefit from this box behaviour: ✨Optimizations✨. `noalias` doesn't exist for fun, it's something
