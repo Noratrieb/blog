@@ -199,6 +199,12 @@ be said that `Box<T>` _is_ a very special type. It's just like a `T`, but on the
 justify all the box magic and its unique behaviour. But in my opinion, this is not a useful mental model regarding unsafe code,
 and I prefer the mental model of "reference that manages its own lifetime", which doesn't imply uniqueness.
 
+But there are also crates on [crates.io](https://crates.io/) like [aliasable](https://crates.io/crates/aliasable) that already
+provide an aliasable version of `Box<T>`, which is used by the self-referential type helper crate [ouroboros](https://crates.io/crates/ouroboros).
+So if box stayed unique, people could also just pick up that crate as a dependency and use the aliasable box from there instead of
+having to write their own. Interestingly, this crate also provides a `Vec<T>`, even though `Vec<T>` can currently be aliased in practice and
+in the current version of stacked borrows. just fine, although it's also not clear whether we want to keep it like this.
+
 # noalias, noslow
 
 There is one clear potential benefit from this box behaviour: ✨Optimizations✨. `noalias` doesn't exist for fun, it's something
@@ -207,24 +213,24 @@ that can bring clear performance wins (for `noalias` on `&mut T`, those were   m
 future?** For the latter, there is no simple answer. For the former, there is. `rustc` has [_no_ performance improvements](https://github.com/rust-lang/rust/pull/99527) 
 from being compiled with `noalias` on `Box<T>`.
 
-I have not yet benchmarked ecosystem crates without box noalias and don't have the capacity to do so right now, so I would be very
-grateful if anyone wanted to pick that up and report the results.
-
-There are also crates on [crates.io](https://crates.io/) like [aliasable](https://crates.io/crates/aliasable) that already
-provide an aliasable version of `Box<T>`, which is used by the self-referential type helper crate [ouroboros](https://crates.io/crates/ouroboros).
+I have also benchmarked a few crates from the ecosystem with and without noalias on box, and the [results](https://gist.github.com/Nilstrieb/9a0751fb9fd1044a30ab55cef9a7d335)
+were inconclusive. (At the time of writing, only regex-syntax, tokio, and syn have been benchmarked.) regex-syntax showed no changes. Tokio showed a few improvements without noalias
+which is very weird, so maybe the benchmarks aren't really good or something else was going on. And syn tended towards minor regressions without noalias, but the benchmarks had high
+jitter so no real conclusion can be reached from this either, at least in my eyes, but I don't have a lot of experience with benchmarks. Therefore, I would love for more people
+to benchmark more crates, especially if you have more experience with benchmarks.
 
 # a way forward
 
-Based on all of this, I do have a few solutions. First of all, I think that even if there might be some small performance regressions in ecosystem crates,
-the overall tradeoff goes against the current box behaviour. Unsafe code wants to use box, and it is reasonable to do so. Therefore I propose to completely
-remove all uniqueness from `Box<T>`, and treat it just like a `*const T` for the purposes of aliasing. This will make it more
-predictable for unsafe code, and comes at none or only a minor performance cost.
+Based on all of this, I do have a few solutions. First of all, I think that even if there might be some small performance regressions, they are not significant enough
+to justify it. Unsafe code wants to use box, and it is reasonable to do so. Therefore I propose to completely remove all uniqueness from `Box<T>`, and treat it
+just like a `*const T` for the purposes of aliasing. This will make it more predictable for unsafe code, and is a step forward towards less magic from `Box<T>`.
 
-But this performance cost may be real, and especially the future optimization value can't be certain. The current uniqueness guarantees of box
+But the performance cost may be real, and especially the future optimization value can't be certain. The current uniqueness guarantees of box
 are very strong, and still giving code an option to obtain these seems useful. One possibility would be for code to use a 
 `&'static mut T` that is unleaked for drop, but the semantics of this are still [unclear](https://github.com/rust-lang/unsafe-code-guidelines/issues/316).
 If that is not possible, exposing `std::ptr::Unique` (with it getting boxes aliasing semantics) could be desirable. For this, all existing usages of `Unique` 
-inside the standard library would have to be removed.
+inside the standard library would have to be removed. We could also offer a `std::boxed::UniqueBox` that keeps the current semantics, but this would also bring direct aliasing
+decisions more towards safe code, which I am not a huge fan of. Ownership is enough already.
 
 I guess what I am wishing for are some good and flexible raw pointer types. But that's still in the stars...
 
