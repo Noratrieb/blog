@@ -142,7 +142,7 @@ be said that &lt;code>Box&amp;lt;T&amp;gt;&lt;/code> &lt;em>is&lt;/em> a very sp
 justify all the box magic and its unique behaviour. But in my opinion, this is not a useful mental model regarding unsafe code,
 and I prefer the mental model of &amp;ldquo;reference that manages its own lifetime&amp;rdquo;, which doesn&amp;rsquo;t imply uniqueness.&lt;/p>
 &lt;h1 id="noalias-noslow">noalias, noslow&lt;/h1>
-&lt;p>There is one clear potential benefit from this box behaviour. ✨Optimizations✨. &lt;code>noalias&lt;/code> doesn&amp;rsquo;t exist for fun, it&amp;rsquo;s something
+&lt;p>There is one clear potential benefit from this box behaviour: ✨Optimizations✨. &lt;code>noalias&lt;/code> doesn&amp;rsquo;t exist for fun, it&amp;rsquo;s something
 that can bring clear performance wins (for &lt;code>noalias&lt;/code> on &lt;code>&amp;amp;mut T&lt;/code>, those were measureable). So the only question remains:
 &lt;strong>How much performance does &lt;code>noalias&lt;/code> on &lt;code>Box&amp;lt;T&amp;gt;&lt;/code> give us now, and how many potential performance improvements could we get in the
 future?&lt;/strong> For the latter, there is no simple answer. For the former, there is. &lt;code>rustc&lt;/code> has &lt;a href="https://github.com/rust-lang/rust/pull/99527">&lt;em>no&lt;/em> performance improvements&lt;/a>
@@ -152,15 +152,14 @@ grateful if anyone wanted to pick that up and report the results.&lt;/p>
 &lt;p>There are also crates on &lt;a href="https://crates.io/">crates.io&lt;/a> like &lt;a href="https://crates.io/crates/aliasable">aliasable&lt;/a> that already
 provide an aliasable version of &lt;code>Box&amp;lt;T&amp;gt;&lt;/code>, which is used by the self-referential type helper crate &lt;a href="https://crates.io/crates/ouroboros">ouroboros&lt;/a>.&lt;/p>
 &lt;h1 id="a-way-forward">a way forward&lt;/h1>
-&lt;p>Based on all of this, I do have a solution that, in opinion, will fix all of this, even potential performance regressions with
-box. First of all, I think that even if there are some performance regressions in ecosystem crates, the overall tradeoff goes
-against the current box behaviour. Unsafe code wants to use box, and it is reasonable to do so. Therefore I propose to completely
+&lt;p>Based on all of this, I do have a few solutions. First of all, I think that even if there might be some small performance regressions in ecosystem crates,
+the overall tradeoff goes against the current box behaviour. Unsafe code wants to use box, and it is reasonable to do so. Therefore I propose to completely
 remove all uniqueness from &lt;code>Box&amp;lt;T&amp;gt;&lt;/code>, and treat it just like a &lt;code>*const T&lt;/code> for the purposes of aliasing. This will make it more
 predictable for unsafe code, and comes at none or only a minor performance cost.&lt;/p>
-&lt;p>But this performance cost may be real, and especially the future optimization value can&amp;rsquo;t be certain. I do think that there
-should be a way to get the uniqueness guarantees in some other way than through box. One possibility would be to use a
+&lt;p>But this performance cost may be real, and especially the future optimization value can&amp;rsquo;t be certain. The current uniqueness guarantees of box
+are very strong, and still giving code an option to obtain these seems useful. One possibility would be for code to use a
 &lt;code>&amp;amp;'static mut T&lt;/code> that is unleaked for drop, but the semantics of this are still &lt;a href="https://github.com/rust-lang/unsafe-code-guidelines/issues/316">unclear&lt;/a>.
-If that is not possible, maybe exposing &lt;code>std::ptr::Unique&lt;/code> (with it getting boxes aliasing semantics) could be desirable.
-For this, all existing usages of &lt;code>Unique&lt;/code> inside the standard library would have to be removed though.&lt;/p>
-&lt;p>I guess what I am wishing for are some good and flexible raw pointer types. That&amp;rsquo;s still in the stars&amp;hellip;&lt;/p>
+If that is not possible, exposing &lt;code>std::ptr::Unique&lt;/code> (with it getting boxes aliasing semantics) could be desirable. For this, all existing usages of &lt;code>Unique&lt;/code>
+inside the standard library would have to be removed.&lt;/p>
+&lt;p>I guess what I am wishing for are some good and flexible raw pointer types. But that&amp;rsquo;s still in the stars&amp;hellip;&lt;/p>
 &lt;p>For more information about this topic, see &lt;a href="https://github.com/rust-lang/unsafe-code-guidelines/issues/326">https://github.com/rust-lang/unsafe-code-guidelines/issues/326&lt;/a>&lt;/p></content></item></channel></rss>
