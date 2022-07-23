@@ -38,7 +38,7 @@ the two values aren&amp;rsquo;t equal. How can they not be equal? If our box and
 location in memory, writing to the box will cause the pointer to read the new value.&lt;/p>
 &lt;p>Now construct a box, get a pointer to it, and pass the two to the function. Run the program&amp;hellip;&lt;/p>
 &lt;p>&amp;hellip; and everything is fine. Let&amp;rsquo;s run it in release mode. This should work as well, since the optimizer
-isn&amp;rsquo;t allowed to change observable behaviour, and an assert is very observable. Run the progrm&amp;hellip;&lt;/p>
+isn&amp;rsquo;t allowed to change observable behaviour, and an assert is very observable. Run the program&amp;hellip;&lt;/p>
 &lt;pre tabindex="0">&lt;code>thread &amp;#39;main&amp;#39; panicked at &amp;#39;assertion failed: `(left != right)`
 left: `0`,
 right: `0`&amp;#39;, src/main.rs:5:5
@@ -59,12 +59,12 @@ Therefore, we also apply &lt;code>noalias&lt;/code> to &lt;code>&amp;amp;mut T&l
 &lt;code>UnsafeCell&amp;lt;T&amp;gt;&lt;/code>), since they uphold these rules.&lt;/li>
 &lt;/ul>
 &lt;p>For more info on &lt;code>noalias&lt;/code>, see &lt;a href="https://llvm.org/docs/LangRef.html#parameter-attributes">LLVMs LangRef&lt;/a>.&lt;/p>
-&lt;p>This might sound familiar to you if you&amp;rsquo;re a viewer of &lt;a href="https://twitter.com/jonhoo">Jon Gjengset&lt;/a>&amp;rsquo;s content (which I can highly recommend). Jon has made an entire video about this before, since his crate &lt;code>left-right&lt;/code>
+&lt;p>This might sound familiar to you if you&amp;rsquo;re a viewer of &lt;a href="https://twitter.com/jonhoo">Jon Gjengset&lt;/a>&amp;rsquo;s content (which I can highly recommend). Jon has made an entire video about this before since his crate &lt;code>left-right&lt;/code>
 was affected by this (&lt;a href="https://youtu.be/EY7Wi9fV5bk)">https://youtu.be/EY7Wi9fV5bk)&lt;/a>.&lt;/p>
 &lt;p>If you&amp;rsquo;re looking for &lt;em>any&lt;/em> hint that using box emits &lt;code>noalias&lt;/code>, you have to look no further than the documentation
 for &lt;a href="https://doc.rust-lang.org/nightly/std/boxed/index.html#considerations-for-unsafe-code">&lt;code>std::boxed&lt;/code>&lt;/a>. Well, the nightly or beta docs, because I only added this section very recently. For years, this behaviour was not really documented, and you had to
 belong to the arcane circles of the select few who were aware of it. So lots of code was written thinking that box was &amp;ldquo;just an
-RAII pointer&amp;rdquo; (a pointer that allocates the value in the constructor, and deallocates it in the destructor on drop) for all
+RAII pointer&amp;rdquo; (a pointer that allocates the value in the constructor and deallocates it in the destructor on drop) for all
 pointers are concerned.&lt;/p>
 &lt;h1 id="stacked-borrows-and-miri">Stacked Borrows and Miri&lt;/h1>
 &lt;p>So, LLVM was completely correct in optimizing our code to make the assert fail. But what exactly gave it permission to do so?
@@ -109,7 +109,7 @@ note: inside `main` at src/main.rs:12:5
 borrow stack of the byte that was accessed. This is something about stacked borrows, the experimental memory model for Rust
 that is implemented in Miri. For an excellent introduction, see this part of the great book &lt;a href="https://rust-unofficial.github.io/too-many-lists/fifth-stacked-borrows.html">Learning Rust With Entirely Too Many Linked Lists&lt;/a>.&lt;/p>
 &lt;p>In short: each pointer has a unique tag attached to it. Each byte in memory has its own &amp;lsquo;borrow stack&amp;rsquo; of these tags,
-and only the pointers that have their tag in the stack are allowed to access it. Tags can be pushed and popped from the stack through various operations, for example borrowing.&lt;/p>
+and only the pointers that have their tag in the stack are allowed to access it. Tags can be pushed and popped from the stack through various operations, for example, borrowing.&lt;/p>
 &lt;p>In the code example above, we get a nice little hint where the tag was created. When we created a reference (that was then
 coerced into a raw pointer) from our box, it got a new tag called &lt;code>&amp;lt;3314&amp;gt;&lt;/code>. Then, when we moved the box into the function,
 something happened: The tag was popped off the borrow stack and therefore invalidated. That&amp;rsquo;s because box invalidates all tags
@@ -123,7 +123,7 @@ If box didn&amp;rsquo;t invalidate pointers on move and instead behaved like a n
 &lt;p>But more importantly, this is not behaviour generally expected by users. While it can be argued that box is like a &lt;code>T&lt;/code>, but on
 the heap, and therefore moving it should invalidate pointers, since moving &lt;code>T&lt;/code> definitely has to invalidate pointers to it,
 this comparison doesn&amp;rsquo;t make sense to me. While &lt;code>Box&amp;lt;T&amp;gt;&lt;/code> usually behaves like a &lt;code>T&lt;/code>, it&amp;rsquo;s just a pointer. Writers of unsafe
-code &lt;em>know&lt;/em> that box is just a pointer, and will abuse that knowledge, accidentally causing UB with it. While this can be
+code &lt;em>know&lt;/em> that box is just a pointer and will abuse that knowledge, accidentally causing UB with it. While this can be
 mitigated with better docs and teaching, like how no one questions the uniqueness of &lt;code>&amp;amp;mut T&lt;/code> (maybe that&amp;rsquo;s also because that
 one makes intuitive sense, &amp;ldquo;shared xor mutable&amp;rdquo; is a simple concept), I think it will always be a problem,
 because in my opinion, box being unique and invalidating pointers on move is simply not intuitive.&lt;/p>
@@ -132,8 +132,8 @@ move in memory. This is the fundamental missing intuition about the box behaviou
 &lt;p>There are also other reasons why the box behaviour is not desirable. Even people who know about the behaviour of box will want
 to write code that goes directly against this behaviour at some point. But usually, fixing it is pretty simple: Storing a raw
 pointer (or &lt;code>NonNull&amp;lt;T&amp;gt;&lt;/code>) instead of a box, and using the constructor and drop to allocate and deallocate the backing box.
-This is fairly inconvenient, but totally acceptable. There are bigger problems though. There are crates like &lt;code>owning_ref&lt;/code>
-that want to expose a generic interface over any type. Users like to choose box, and sometimes &lt;em>have&lt;/em> to chose box because of
+This is fairly inconvenient but totally acceptable. There are bigger problems though. There are crates like &lt;code>owning_ref&lt;/code>
+that want to expose a generic interface over any type. Users like to choose box, and sometimes &lt;em>have&lt;/em> to choose box because of
 other box-exclusive features it offers. Even worse is &lt;code>string_cache&lt;/code>, which is extremely hard to fix.&lt;/p>
 &lt;p>Then last but not least, there&amp;rsquo;s the opinionated fact that &lt;code>Box&amp;lt;T&amp;gt;&lt;/code> shall be implementable entirely in user code. While we are
 many missing language features away from this being the case, the &lt;code>noalias&lt;/code> case is also magic descended upon box itself, with no
@@ -161,8 +161,8 @@ jitter so no real conclusion can be reached from this either, at least in my eye
 to benchmark more crates, especially if you have more experience with benchmarks.&lt;/p>
 &lt;h1 id="a-way-forward">a way forward&lt;/h1>
 &lt;p>Based on all of this, I do have a few solutions. First of all, I think that even if there might be some small performance regressions, they are not significant enough
-to justify boxes uniqueness. Unsafe code wants to use box, and it is reasonable to do so. Therefore I propose to completely remove all uniqueness from &lt;code>Box&amp;lt;T&amp;gt;&lt;/code>, and treat it
-just like a &lt;code>*const T&lt;/code> for the purposes of aliasing. This will make it more predictable for unsafe code, and is a step forward towards less magic from &lt;code>Box&amp;lt;T&amp;gt;&lt;/code>.&lt;/p>
+to justify boxes uniqueness. Unsafe code wants to use box, and it is reasonable to do so. Therefore I propose to completely remove all uniqueness from &lt;code>Box&amp;lt;T&amp;gt;&lt;/code> and treat it
+just like a &lt;code>*const T&lt;/code> for aliasing. This will make it more predictable for unsafe code and is a step forward towards less magic from &lt;code>Box&amp;lt;T&amp;gt;&lt;/code>.&lt;/p>
 &lt;p>But the performance cost may be real, and especially the future optimization value can&amp;rsquo;t be certain. The current uniqueness guarantees of box
 are very strong, and still giving code an option to obtain these seems useful. One possibility would be for code to use a
 &lt;code>&amp;amp;'static mut T&lt;/code> that is unleaked for drop, but the semantics of this are still &lt;a href="https://github.com/rust-lang/unsafe-code-guidelines/issues/316">unclear&lt;/a>.
