@@ -125,7 +125,7 @@ this comparison doesn&amp;rsquo;t make sense to me. While &lt;code>Box&amp;lt;T&
 code &lt;em>know&lt;/em> that box is just a pointer, and will abuse that knowledge, accidentally causing UB with it. While this can be
 mitigated with better docs and teaching, like how no one questions the uniqueness of &lt;code>&amp;amp;mut T&lt;/code> (maybe that&amp;rsquo;s also because that
 one makes intuitive sense, &amp;ldquo;shared xor mutable&amp;rdquo; is a simple concept), I think it will always be a problem,
-because in my opinion, box being unique and invalidating pointers on move is simply not intiutive.&lt;/p>
+because in my opinion, box being unique and invalidating pointers on move is simply not intuitive.&lt;/p>
 &lt;p>When a box is moved, the pointer bytes change their location in memory. But the bytes the box points to stay the same. They don&amp;rsquo;t
 move in memory. This is the fundamental missing intuition about the box behaviour.&lt;/p>
 &lt;p>There are also other reasons why the box behaviour is not desirable. Even people who know about the behaviour of box will want
@@ -137,18 +137,20 @@ other box-exclusive features it offers. Even worse is &lt;code>string_cache&lt;/
 &lt;p>Then last but not least, there&amp;rsquo;s the opinionated fact that &lt;code>Box&amp;lt;T&amp;gt;&lt;/code> shall be implementable entirely in user code. While we are
 many missing language features away from this being the case, the &lt;code>noalias&lt;/code> case is also magic descended upon box itself, with no
 user code ever having access to it.&lt;/p>
-&lt;h1 id="noalias-noslow">noalias, noslow&lt;/h1>
 &lt;p>There are also several arguments in favour of box being unique and special cased here. To negate the last argument above, it can
 be said that &lt;code>Box&amp;lt;T&amp;gt;&lt;/code> &lt;em>is&lt;/em> a very special type. It&amp;rsquo;s just like a &lt;code>T&lt;/code>, but on the heap. Using this mental model, it&amp;rsquo;s very easy to
-justify all the box magic and its unique behaviour.&lt;/p>
-&lt;p>This mental model is one that many people have, but what does this bring us? This is just one mental model of box, and
-there are other mental models of it (like &amp;ldquo;a reference that manages its lifetime itself&amp;rdquo; or &amp;ldquo;a safe RAII pointer&amp;rdquo;).&lt;/p>
+justify all the box magic and its unique behaviour. But in my opinion, this is not a useful mental model regarding unsafe code,
+and I prefer the mental model of &amp;ldquo;reference that manages its own lifetime&amp;rdquo;, which doesn&amp;rsquo;t imply uniqueness.&lt;/p>
+&lt;h1 id="noalias-noslow">noalias, noslow&lt;/h1>
 &lt;p>There is one clear potential benefit from this box behaviour. ✨Optimizations✨. &lt;code>noalias&lt;/code> doesn&amp;rsquo;t exist for fun, it&amp;rsquo;s something
 that can bring clear performance wins (for &lt;code>noalias&lt;/code> on &lt;code>&amp;amp;mut T&lt;/code>, those were measureable). So the only question remains:
-How much performance does &lt;code>noalias&lt;/code> on &lt;code>Box&amp;lt;T&amp;gt;&lt;/code> give us now, and how much potential performance improvements could we get in the
-future? For the latter, there is no simple answer. For the former, there is. &lt;code>rustc&lt;/code> has &lt;a href="https://github.com/rust-lang/rust/pull/99527">&lt;em>no&lt;/em> performance improvements&lt;/a> from being compiled with &lt;code>noalias&lt;/code> on &lt;code>Box&amp;lt;T&amp;gt;&lt;/code>.&lt;/p>
+&lt;strong>How much performance does &lt;code>noalias&lt;/code> on &lt;code>Box&amp;lt;T&amp;gt;&lt;/code> give us now, and how many potential performance improvements could we get in the
+future?&lt;/strong> For the latter, there is no simple answer. For the former, there is. &lt;code>rustc&lt;/code> has &lt;a href="https://github.com/rust-lang/rust/pull/99527">&lt;em>no&lt;/em> performance improvements&lt;/a>
+from being compiled with &lt;code>noalias&lt;/code> on &lt;code>Box&amp;lt;T&amp;gt;&lt;/code>.&lt;/p>
 &lt;p>I have not yet benchmarked ecosystem crates without box noalias and don&amp;rsquo;t have the capacity to do so right now, so I would be very
 grateful if anyone wanted to pick that up and report the results.&lt;/p>
+&lt;p>There are also crates on &lt;a href="https://crates.io/">crates.io&lt;/a> like &lt;a href="https://crates.io/crates/aliasable">aliasable&lt;/a> that already
+provide an aliasable version of &lt;code>Box&amp;lt;T&amp;gt;&lt;/code>, which is used by the self-referential type helper crate &lt;a href="https://crates.io/crates/ouroboros">ouroboros&lt;/a>.&lt;/p>
 &lt;h1 id="a-way-forward">a way forward&lt;/h1>
 &lt;p>Based on all of this, I do have a solution that, in opinion, will fix all of this, even potential performance regressions with
 box. First of all, I think that even if there are some performance regressions in ecosystem crates, the overall tradeoff goes
@@ -156,6 +158,9 @@ against the current box behaviour. Unsafe code wants to use box, and it is reaso
 remove all uniqueness from &lt;code>Box&amp;lt;T&amp;gt;&lt;/code>, and treat it just like a &lt;code>*const T&lt;/code> for the purposes of aliasing. This will make it more
 predictable for unsafe code, and comes at none or only a minor performance cost.&lt;/p>
 &lt;p>But this performance cost may be real, and especially the future optimization value can&amp;rsquo;t be certain. I do think that there
-should be a way to get the uniqueness guarantees in some other way than through box. One possibility would be to use a &lt;code>&amp;amp;'static mut T&lt;/code> that is unleaked for drop, but the semantics of this are still &lt;a href="https://github.com/rust-lang/unsafe-code-guidelines/issues/316">unclear&lt;/a>. If that is not possible, maybe exposing &lt;code>std::ptr::Unique&lt;/code> (with it getting boxes aliasing semantics) could be desirable. For this, all existing usages of &lt;code>Unique&lt;/code> inside the standard library would have to be removed though.&lt;/p>
+should be a way to get the uniqueness guarantees in some other way than through box. One possibility would be to use a
+&lt;code>&amp;amp;'static mut T&lt;/code> that is unleaked for drop, but the semantics of this are still &lt;a href="https://github.com/rust-lang/unsafe-code-guidelines/issues/316">unclear&lt;/a>.
+If that is not possible, maybe exposing &lt;code>std::ptr::Unique&lt;/code> (with it getting boxes aliasing semantics) could be desirable.
+For this, all existing usages of &lt;code>Unique&lt;/code> inside the standard library would have to be removed though.&lt;/p>
 &lt;p>I guess what I am wishing for are some good and flexible raw pointer types. That&amp;rsquo;s still in the stars&amp;hellip;&lt;/p>
 &lt;p>For more information about this topic, see &lt;a href="https://github.com/rust-lang/unsafe-code-guidelines/issues/326">https://github.com/rust-lang/unsafe-code-guidelines/issues/326&lt;/a>&lt;/p></content></item></channel></rss>
