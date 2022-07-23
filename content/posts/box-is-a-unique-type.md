@@ -64,7 +64,7 @@ location in memory, writing to the box will cause the pointer to read the new va
 Now construct a box, get a pointer to it, and pass the two to the function. Run the program...
 
 ... and everything is fine. Let's run it in release mode. This should work as well, since the optimizer
-isn't allowed to change observable behaviour, and an assert is very observable. Run the progrm...
+isn't allowed to change observable behaviour, and an assert is very observable. Run the program...
 
 ```
 thread 'main' panicked at 'assertion failed: `(left != right)`
@@ -94,13 +94,13 @@ Therefore, we also apply `noalias` to `&mut T` and `&T` (if it doesn't contain i
 
 For more info on `noalias`, see [LLVMs LangRef](https://llvm.org/docs/LangRef.html#parameter-attributes).
 
-This might sound familiar to you if you're a viewer of [Jon Gjengset](https://twitter.com/jonhoo)'s content (which I can highly recommend). Jon has made an entire video about this before, since his crate `left-right`
+This might sound familiar to you if you're a viewer of [Jon Gjengset](https://twitter.com/jonhoo)'s content (which I can highly recommend). Jon has made an entire video about this before since his crate `left-right`
 was affected by this (https://youtu.be/EY7Wi9fV5bk).
 
 If you're looking for _any_ hint that using box emits `noalias`, you have to look no further than the documentation
 for [`std::boxed`](https://doc.rust-lang.org/nightly/std/boxed/index.html#considerations-for-unsafe-code). Well, the nightly or beta docs, because I only added this section very recently. For years, this behaviour was not really documented, and you had to
 belong to the arcane circles of the select few who were aware of it. So lots of code was written thinking that box was "just an
-RAII pointer" (a pointer that allocates the value in the constructor, and deallocates it in the destructor on drop) for all
+RAII pointer" (a pointer that allocates the value in the constructor and deallocates it in the destructor on drop) for all
 pointers are concerned.
 
 # Stacked Borrows and Miri
@@ -155,7 +155,7 @@ borrow stack of the byte that was accessed. This is something about stacked borr
 that is implemented in Miri. For an excellent introduction, see this part of the great book [Learning Rust With Entirely Too Many Linked Lists](https://rust-unofficial.github.io/too-many-lists/fifth-stacked-borrows.html).
 
 In short: each pointer has a unique tag attached to it. Each byte in memory has its own 'borrow stack' of these tags,
-and only the pointers that have their tag in the stack are allowed to access it. Tags can be pushed and popped from the stack through various operations, for example borrowing.
+and only the pointers that have their tag in the stack are allowed to access it. Tags can be pushed and popped from the stack through various operations, for example, borrowing.
 
 In the code example above, we get a nice little hint where the tag was created. When we created a reference (that was then
 coerced into a raw pointer) from our box, it got a new tag called `<3314>`. Then, when we moved the box into the function,
@@ -175,7 +175,7 @@ If box didn't invalidate pointers on move and instead behaved like a normal raw 
 But more importantly, this is not behaviour generally expected by users. While it can be argued that box is like a `T`, but on
 the heap, and therefore moving it should invalidate pointers, since moving `T` definitely has to invalidate pointers to it,
 this comparison doesn't make sense to me. While `Box<T>` usually behaves like a `T`, it's just a pointer. Writers of unsafe
-code _know_ that box is just a pointer, and will abuse that knowledge, accidentally causing UB with it. While this can be
+code _know_ that box is just a pointer and will abuse that knowledge, accidentally causing UB with it. While this can be
 mitigated with better docs and teaching, like how no one questions the uniqueness of `&mut T` (maybe that's also because that
 one makes intuitive sense, "shared xor mutable" is a simple concept), I think it will always be a problem,
 because in my opinion, box being unique and invalidating pointers on move is simply not intuitive.
@@ -186,8 +186,8 @@ move in memory. This is the fundamental missing intuition about the box behaviou
 There are also other reasons why the box behaviour is not desirable. Even people who know about the behaviour of box will want
 to write code that goes directly against this behaviour at some point. But usually, fixing it is pretty simple: Storing a raw
 pointer (or `NonNull<T>`) instead of a box, and using the constructor and drop to allocate and deallocate the backing box.
-This is fairly inconvenient, but totally acceptable. There are bigger problems though. There are crates like `owning_ref`
-that want to expose a generic interface over any type. Users like to choose box, and sometimes _have_ to chose box because of
+This is fairly inconvenient but totally acceptable. There are bigger problems though. There are crates like `owning_ref`
+that want to expose a generic interface over any type. Users like to choose box, and sometimes _have_ to choose box because of
 other box-exclusive features it offers. Even worse is `string_cache`, which is extremely hard to fix.
 
 Then last but not least, there's the opinionated fact that `Box<T>` shall be implementable entirely in user code. While we are
@@ -223,8 +223,8 @@ to benchmark more crates, especially if you have more experience with benchmarks
 # a way forward
 
 Based on all of this, I do have a few solutions. First of all, I think that even if there might be some small performance regressions, they are not significant enough
-to justify boxes uniqueness. Unsafe code wants to use box, and it is reasonable to do so. Therefore I propose to completely remove all uniqueness from `Box<T>`, and treat it
-just like a `*const T` for the purposes of aliasing. This will make it more predictable for unsafe code, and is a step forward towards less magic from `Box<T>`.
+to justify boxes uniqueness. Unsafe code wants to use box, and it is reasonable to do so. Therefore I propose to completely remove all uniqueness from `Box<T>` and treat it
+just like a `*const T` for aliasing. This will make it more predictable for unsafe code and is a step forward towards less magic from `Box<T>`.
 
 But the performance cost may be real, and especially the future optimization value can't be certain. The current uniqueness guarantees of box
 are very strong, and still giving code an option to obtain these seems useful. One possibility would be for code to use a 
