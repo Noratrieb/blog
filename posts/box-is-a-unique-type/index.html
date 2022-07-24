@@ -113,7 +113,7 @@ and I prefer the mental model of &ldquo;reference that manages its own lifetime&
 provide an aliasable version of <code>Box&lt;T></code>, which is used by the self-referential type helper crate <a href=https://crates.io/crates/ouroboros>ouroboros</a>.
 So if box stayed unique, people could also just pick up that crate as a dependency and use the aliasable box from there instead of
 having to write their own. Interestingly, this crate also provides a <code>Vec&lt;T></code>, even though <code>Vec&lt;T></code> can currently be aliased in practice and
-in the current version of stacked borrows. just fine, although it&rsquo;s also not clear whether we want to keep it like this, but I
+in the current version of stacked borrows just fine, although it&rsquo;s also not clear whether we want to keep it like this, but I
 don&rsquo;t think this can reasonable be changed.</p><blockquote><p>One thing was just pointed out to me after releasing the post: Mutation usually goes through <code>&mut T</code> anyways, even when the value
 is stored as a <code>Box&lt;T></code>. Therefore, all the guarantees of uniqueness are already present when mutating boxes, making the uniqueness
 of box even less important.</p></blockquote><h1 id=noalias-noslow>noalias, noslow<a href=#noalias-noslow class=hanchor arialabel=Anchor>&#8983;</a></h1><p>There is one clear potential benefit from this box behaviour: ✨Optimizations✨. <code>noalias</code> doesn&rsquo;t exist for fun, it&rsquo;s something

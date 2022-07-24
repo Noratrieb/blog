@@ -146,7 +146,7 @@ and I prefer the mental model of &amp;ldquo;reference that manages its own lifet
 provide an aliasable version of &lt;code>Box&amp;lt;T&amp;gt;&lt;/code>, which is used by the self-referential type helper crate &lt;a href="https://crates.io/crates/ouroboros">ouroboros&lt;/a>.
 So if box stayed unique, people could also just pick up that crate as a dependency and use the aliasable box from there instead of
 having to write their own. Interestingly, this crate also provides a &lt;code>Vec&amp;lt;T&amp;gt;&lt;/code>, even though &lt;code>Vec&amp;lt;T&amp;gt;&lt;/code> can currently be aliased in practice and
-in the current version of stacked borrows. just fine, although it&amp;rsquo;s also not clear whether we want to keep it like this, but I
+in the current version of stacked borrows just fine, although it&amp;rsquo;s also not clear whether we want to keep it like this, but I
 don&amp;rsquo;t think this can reasonable be changed.&lt;/p>
 &lt;blockquote>
 &lt;p>One thing was just pointed out to me after releasing the post: Mutation usually goes through &lt;code>&amp;amp;mut T&lt;/code> anyways, even when the value
