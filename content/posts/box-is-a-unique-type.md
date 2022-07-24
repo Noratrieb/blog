@@ -203,7 +203,7 @@ But there are also crates on [crates.io](https://crates.io/) like [aliasable](ht
 provide an aliasable version of `Box<T>`, which is used by the self-referential type helper crate [ouroboros](https://crates.io/crates/ouroboros).
 So if box stayed unique, people could also just pick up that crate as a dependency and use the aliasable box from there instead of
 having to write their own. Interestingly, this crate also provides a `Vec<T>`, even though `Vec<T>` can currently be aliased in practice and
-in the current version of stacked borrows. just fine, although it's also not clear whether we want to keep it like this, but I
+in the current version of stacked borrows just fine, although it's also not clear whether we want to keep it like this, but I
 don't think this can reasonable be changed.
 
 > One thing was just pointed out to me after releasing the post: Mutation usually goes through `&mut T` anyways, even when the value
