@@ -91,11 +91,71 @@ But there is one big limitation of pattern matching - all of its occurrences (`m
 
 This doesn't sound too bad. This is where the executed code resides. But it comes at a cost of consistency. We often add many syntactical niceties to expressions and statements, but forget about items.
 
+# Items and sadness
+
 Items have a hard life. They are the parents of everything important. `struct`, `enum`, `const`, `mod`, `fn`, `union`, `global_asm` are all things we use daily, yet their grammar is very limited.
 
 
-For example, see the following code
+For example, see the following code where we declare a few constants.
 
 ```
+const ONE: u8 = 1;
+const TWO: u8 = 1;
+const THREE: u8 = 3;
+```
+
+There is nothing obviously wrong with this code. You understand it, I understand it, an ALGOL 68 developer from 1970 would probably understand it
+and even an ancient greek philopher might have a clue (which is impressive, given that they are all not alive anymore). But this is the kind of code that pages you at 4 AM.
+
+You've read the last paragraph in confusion. Of course there's something wrong with this code! `TWO` is `1`, yet the name strongly suggests that it should be `2`. And you'd
+be right, this was just a check to make sure you're still here.
+
+But even if it was `2`, this code is still not good. There is way too much duplication! `const` is mentioned three times. This is a major distraction to the reader.
+
+Let's have a harder example:
+
+```rust
+const ONE: u8 = 0; const
+NAME: &
+str = "nils";
+       const X: &str
+  =   "const";const A: () = ();
+```
+
+Here, the `const` being noise is a lot more obvious. Did you see that `X` contains `"const"`? Maybe you did, maybe you didn't. When I tested it, 0/0 people could see it.
+
+Now imagine if it looked like this:
+
+```rust
+const (ONE, NAME, X, A): (u8, &str, &str, ()) = (0, "nils", "const", ());
+```
+
+Everything is way shorter and more readable.
+
+What you've just seen is a limited form of pattern matching!
+
+# Let's go further
+
+The idea of generalizing pattern matching is very powerful. We can apply this to more than just consts.
+
+```rust
+struct (Person, Car) = ({ name: String }, { wheels: u8 });
+```
+
+Here, we create two structs with just a single `struct` keyword. This makes it way simpler and easier to read when related structs are declared.
+So far we've just used tuples. But we can go even further. Metastructs!
+
+```
+struct Household {
+  parent: struct,
+  child: struct,
+}
+
+struct Colors { parent: , child: Green } = Colors {
+  red: { 
+};
+
 
 <sub>maybe this post was meant as a joke. maybe it wasn't. it is up to you to bring your own judgement to the idea and write an RFC.</sub>
+<br/>
+<sub>this post was not meant to make fun of anyone's ideas. it was just a good bad idea i had once and then friends made me write this</sub>
