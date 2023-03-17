@@ -1,0 +1,131 @@
+<!doctype html><html lang=en><head><title>Item Patterns And Struct Else :: nilstriebs blog</title><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="Bringing more expressiveness to our items"><meta name=keywords content="design"><meta name=robots content="noodp"><link rel=canonical href=/posts/item-patterns-and-struct-else/><link rel=stylesheet href=/assets/style.css><link rel=apple-touch-icon href=/img/apple-touch-icon-192x192.png><link rel="shortcut icon" href=/img/favicon/orange.png><meta name=twitter:card content="summary"><meta property="og:locale" content="en"><meta property="og:type" content="article"><meta property="og:title" content="Item Patterns And Struct Else"><meta property="og:description" content="Bringing more expressiveness to our items"><meta property="og:url" content="/posts/item-patterns-and-struct-else/"><meta property="og:site_name" content="nilstriebs blog"><meta property="og:image" content="/img/favicon/orange.png"><meta property="og:image:width" content="2048"><meta property="og:image:height" content="1024"><meta property="article:published_time" content="2023-03-17 00:00:00 +0000 UTC"></head><body class=orange><div class="container center headings--one-size"><header class=header><div class=header__inner><div class=header__logo><a href=/><div class=logo>nilstriebs blog</div></a></div></div></header><div class=content><div class=post><h1 class=post-title><a href=/posts/item-patterns-and-struct-else/>Item Patterns And Struct Else</a></h1><div class=post-meta><span class=post-date>2023-03-17</span>
+<span class=post-author>:: Nilstrieb</span>
+<span class=post-reading-time>:: 7 min read (1351 words)</span></div><span class=post-tags>#<a href=/tags/rust/>rust</a>&nbsp;
+#<a href=/tags/language-design/>language-design</a>&nbsp;</span><div class=post-content><div><h1 id=pattern-matching>Pattern matching<a href=#pattern-matching class=hanchor arialabel=Anchor>&#8983;</a></h1><p>One of my favourite features of Rust is pattern matching. It&rsquo;s a simple and elegant way to deal with not just structs, but also enums!</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>enum</span> <span style=color:#a6e22e>ItemKind</span> {
+</span></span><span style=display:flex><span>  Struct(String, Vec<span style=color:#f92672>&lt;</span>Field<span style=color:#f92672>&gt;</span>),
+</span></span><span style=display:flex><span>  Function(String, Body),
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>impl</span> ItemKind {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>fn</span> <span style=color:#a6e22e>name</span>(<span style=color:#f92672>&amp;</span>self) -&gt; <span style=color:#66d9ef>&amp;</span><span style=color:#66d9ef>str</span> {
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>match</span> self {
+</span></span><span style=display:flex><span>      Self::Struct(name, _) <span style=color:#f92672>=&gt;</span> name,
+</span></span><span style=display:flex><span>      Self::Function(name, _) <span style=color:#f92672>=&gt;</span> name,
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>Here, we have an enum and a function to get the name out of this. In C, this would be very unsafe, as we cannot be guaranteed that our union has the right tag.
+But in Rust, the compiler nicely checks it all for us. It&rsquo;s safe and expressive (just like many other features of Rust).</p><p>But that isn&rsquo;t the only way to use pattern matching. While branching is one of its core features (in that sense, pattern matching is just like git),
+it doesn&rsquo;t always have to be used. Another major advantage of pattern matching lies in the ability to <em>exhaustively</em> (not be be confused with exhausting, like writing down brilliant ideas like this) match over inputs.</p><p>Let&rsquo;s look at the following example. Here, we have a struct representing a struct in a programming language. It has a name and fields.
+We then manually implement a custom hash trait for it because we are important and need a custom hash trait. We could have written a derive macro, but didn&rsquo;t because
+we don&rsquo;t understand how proc macros work.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Struct</span> {
+</span></span><span style=display:flex><span>  name: String,
+</span></span><span style=display:flex><span>  fields: Vec<span style=color:#f92672>&lt;</span>Field<span style=color:#f92672>&gt;</span>,
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>impl</span> HandRolledHash <span style=color:#66d9ef>for</span> Struct {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>fn</span> <span style=color:#a6e22e>hash</span>(<span style=color:#f92672>&amp;</span>self, hasher: <span style=color:#66d9ef>&amp;</span><span style=color:#a6e22e>mut</span> HandRolledHasher) {
+</span></span><span style=display:flex><span>    hasher.hash(<span style=color:#f92672>&amp;</span>self.name);
+</span></span><span style=display:flex><span>    hasher.hash(<span style=color:#f92672>&amp;</span>self.fields);
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>This works perfectly. But then later, <a href=https://github.com/rust-lang/rustup/pull/1642>we add privacy to the language</a>. Now, all types have a visibility.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-diff data-lang=diff><span style=display:flex><span>struct Struct {
+</span></span><span style=display:flex><span><span style=color:#a6e22e>+ visibility: Vis,
+</span></span></span><span style=display:flex><span><span style=color:#a6e22e></span>  name: String,
+</span></span><span style=display:flex><span>  fields: Vec&lt;Field&gt;,
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>Pretty cool. Now no one can access the implementation details and make everything a mess. But wait - we have just made a mess! We didn&rsquo;t hash the visibility!
+Hashing something incorrectly <a href=https://github.com/rust-lang/rust/issues/84970>doesn&rsquo;t sound too bad</a>, but it would be nice if this was prevented.</p><p>Thanks to exhaustive pattern matching, it would have been easy to prevent. We just change our hash implementation:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>impl</span> HandRolledHash <span style=color:#66d9ef>for</span> Struct {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>fn</span> <span style=color:#a6e22e>hash</span>(<span style=color:#f92672>&amp;</span>self, hasher: <span style=color:#66d9ef>&amp;</span><span style=color:#a6e22e>mut</span> HandRolledHasher) {
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>let</span> Self { name, fields } <span style=color:#f92672>=</span> self;
+</span></span><span style=display:flex><span>    hasher.hash(name);
+</span></span><span style=display:flex><span>    hasher.hash(fields);
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>And with this, adding the visibility will cause a compiler error and alert us that we need to handle it in hashing.
+(The decision whether we actually do want to handle it is still up to us. We could also just turn off the computer and make new friends outside.)</p><p>We can conclude that pattern matching is a great feature.</p><h1 id=limitations-of-pattern-matching>Limitations of pattern matching<a href=#limitations-of-pattern-matching class=hanchor arialabel=Anchor>&#8983;</a></h1><p>But there is one big limitation of pattern matching - all of its occurrences (<code>match</code>, <code>if let</code>, <code>if let</code> chains, <code>while let</code>, <code>while let</code> chains, <code>for</code>, <code>let</code>, <code>let else</code>, and function parameters
+(we do have a lot of pattern matching)) are inside of bodies, mostly as part of expressions or statements.</p><p>This doesn&rsquo;t sound too bad. This is where the executed code resides. But it comes at a cost of consistency. We often add many syntactical niceties to expressions and statements, but forget about items.</p><h1 id=items-and-sadness>Items and sadness<a href=#items-and-sadness class=hanchor arialabel=Anchor>&#8983;</a></h1><p>Items have a hard life. They are the parents of everything important. <code>struct</code>, <code>enum</code>, <code>const</code>, <code>mod</code>, <code>fn</code>, <code>union</code>, <code>global_asm</code> are all things we use daily, yet their grammar is very limited. (&ldquo;free the items&rdquo; was an alternative blog post title, although &ldquo;freeing&rdquo; generally remains a concern of <a href=https://nilstrieb.github.io/nilstrieb-c-style-guide-edition-2/>my C style guide</a>).</p><p>For example, see the following code where we declare a few constants.</p><pre tabindex=0><code>const ONE: u8 = 1;
+const TWO: u8 = 1;
+const THREE: u8 = 3;
+</code></pre><p>There is nothing obviously wrong with this code. You understand it, I understand it, an ALGOL 68 developer from 1970 would probably understand it
+and even an ancient greek philosopher might have a clue (which is impressive, given that they are all not alive anymore). But this is the kind of code that pages you at 4 AM.</p><p>You&rsquo;ve read the last paragraph in confusion. Of course there&rsquo;s something wrong with this code! <code>TWO</code> is <code>1</code>, yet the name strongly suggests that it should be <code>2</code>. And you&rsquo;d
+be right, this was just a check to make sure you&rsquo;re still here. You are very clever and deserve this post. If you didn&rsquo;t notice it, go to sleep. It&rsquo;s good for your health.</p><p>But even if it was <code>2</code>, this code is still not good. There is way too much duplication! <code>const</code> is mentioned three times. This is a major distraction to the reader.</p><p>Let&rsquo;s have a harder example:</p><pre tabindex=0><code>const ONE: u8 = 0; const
+NAME: &amp;
+str = &#34;nils&#34;;
+       const X: &amp;str
+  =   &#34;const&#34;;const A: () = ();
+</code></pre><p>Here, the <code>const</code> being noise is a lot more obvious. Did you see that <code>X</code> contains <code>"const"</code>? Maybe you did, maybe you didn&rsquo;t. When I tested it, 0/0 people could see it.</p><p>Now imagine if it looked like this:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>const</span> (<span style=color:#66d9ef>ONE</span>, <span style=color:#66d9ef>NAME</span>, X, A): (<span style=color:#66d9ef>u8</span>, <span style=color:#f92672>&amp;</span><span style=color:#66d9ef>str</span>, <span style=color:#f92672>&amp;</span><span style=color:#66d9ef>str</span>, ()) <span style=color:#f92672>=</span> (<span style=color:#ae81ff>0</span>, <span style=color:#e6db74>&#34;nils&#34;</span>, <span style=color:#e6db74>&#34;const&#34;</span>, ());
+</span></span></code></pre></div><p>Everything is way shorter and more readable.</p><p>What you&rsquo;ve just seen is a limited form of pattern matching!</p><h1 id=lets-go-further>Let&rsquo;s go further<a href=#lets-go-further class=hanchor arialabel=Anchor>&#8983;</a></h1><p>The idea of generalizing pattern matching is very powerful. We can apply this to more than just consts.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>struct</span> (Person, Car) <span style=color:#f92672>=</span> ({ name: String }, { wheels: <span style=color:#66d9ef>u8</span> });
+</span></span></code></pre></div><p>Here, we create two structs with just a single <code>struct</code> keyword. This makes it way simpler and easier to read when related structs are declared.
+So far we&rsquo;ve just used tuples. But we can go even further. Structs of structs!</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Household</span><span style=color:#f92672>&lt;</span>T, U<span style=color:#f92672>&gt;</span> {
+</span></span><span style=display:flex><span>  parent: <span style=color:#a6e22e>T</span>,
+</span></span><span style=display:flex><span>  child: <span style=color:#a6e22e>U</span>,
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Household</span> { parent: <span style=color:#a6e22e>Ferris</span>, child: <span style=color:#a6e22e>Corro</span> } <span style=color:#f92672>=</span> Household {
+</span></span><span style=display:flex><span>  parent: { name: String },
+</span></span><span style=display:flex><span>  child: { name: String, unsafety: <span style=color:#66d9ef>bool</span> },
+</span></span><span style=display:flex><span>};
+</span></span></code></pre></div><p>Now we can nicely match on the <code>Household</code> struct containing the definition of the <code>Ferris</code> and <code>Corro</code> structs. This is equivalent to the following code:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Feris</span> {
+</span></span><span style=display:flex><span>  name: String,
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Corro</span> {
+</span></span><span style=display:flex><span>  name: String,
+</span></span><span style=display:flex><span>  unsafety: <span style=color:#66d9ef>bool</span>,
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>This is already really neat, but there&rsquo;s more. We also have to consider the falliblity of patterns.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>static</span> Some(A) <span style=color:#f92672>=</span> None;
+</span></span></code></pre></div><p>This pattern doesn&rsquo;t match. Inside bodies, we could use an <code>if let</code>:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>if</span> <span style=color:#66d9ef>let</span> Some(a) <span style=color:#f92672>=</span> None {} <span style=color:#66d9ef>else</span> {}
+</span></span></code></pre></div><p>We can also apply this to items.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>if</span> <span style=color:#66d9ef>struct</span> Some(A) <span style=color:#f92672>=</span> None {
+</span></span><span style=display:flex><span>  <span style=color:#75715e>/* other items where A exists */</span>
+</span></span><span style=display:flex><span>} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>  <span style=color:#75715e>/* other items where A doesn&#39;t exist */</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>This doesn&rsquo;t sound too useful, but it allows for extreme flexibility!</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span>macro_rules<span style=color:#f92672>!</span> are_same_type {
+</span></span><span style=display:flex><span>  (<span style=color:#75715e>$a</span>:<span style=color:#a6e22e>ty</span>, <span style=color:#75715e>$b</span>:<span style=color:#a6e22e>ty</span>) <span style=color:#f92672>=&gt;</span> {{
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>mut</span> <span style=color:#66d9ef>ARE_SAME</span>: <span style=color:#66d9ef>bool</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>false</span>;
+</span></span><span style=display:flex><span>  
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span> <span style=color:#66d9ef>struct</span> <span style=color:#75715e>$a</span> <span style=color:#f92672>=</span> <span style=color:#75715e>$b</span> {
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>const</span> _: () <span style=color:#f92672>=</span> <span style=color:#66d9ef>unsafe</span> { <span style=color:#66d9ef>ARE_SAME</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>true</span>; };
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>    
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>unsafe</span> { <span style=color:#66d9ef>ARE_SAME</span> }
+</span></span><span style=display:flex><span>  }};
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>fn</span> <span style=color:#a6e22e>main</span>() {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span> are_same_type!(Vec<span style=color:#f92672>&lt;</span>String<span style=color:#f92672>&gt;</span>, String) {
+</span></span><span style=display:flex><span>    println!(<span style=color:#e6db74>&#34;impossible to reach!&#34;</span>);
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>Ignoring this suspicious assignment to a <code>static mut</code>, this is lovely!</p><p>We can go further.</p><p>Today, items are just there with no ordering. What if we imposed an ordering? (and just like this, the C11 atomic model was born.) What if &ldquo;Rust items&rdquo; was a meta scripting language?</p><p>We can write a simple guessing game!</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>fn</span> input() -&gt; <span style=color:#66d9ef>u8</span> {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>INPUT</span>: <span style=color:#66d9ef>&amp;</span><span style=color:#66d9ef>str</span> <span style=color:#f92672>=</span> prompt!();
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>const</span> Ok(<span style=color:#66d9ef>INPUT</span>): Result<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>u8</span>, ParseIntErr<span style=color:#f92672>&gt;</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>INPUT</span>.parse() <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>    compile_error!(<span style=color:#e6db74>&#34;Invalid input&#34;</span>);
+</span></span><span style=display:flex><span>  };
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>INPUT</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>const</span> <span style=color:#66d9ef>RANDOM</span>: <span style=color:#66d9ef>u8</span> <span style=color:#f92672>=</span> env!(<span style=color:#e6db74>&#34;RANDOM&#34;</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>loop</span> {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>INPUT</span> <span style=color:#f92672>=</span> input();
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span> <span style=color:#66d9ef>INPUT</span> <span style=color:#f92672>==</span> <span style=color:#66d9ef>RANDOM</span> {
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>break</span>; <span style=color:#75715e>// continue compilation
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  } <span style=color:#66d9ef>else</span> <span style=color:#66d9ef>if</span> <span style=color:#66d9ef>INPUT</span> <span style=color:#f92672>&lt;</span> <span style=color:#66d9ef>RANDOM</span> {
+</span></span><span style=display:flex><span>    compile_warn!(<span style=color:#e6db74>&#34;input is smaller&#34;</span>);
+</span></span><span style=display:flex><span>  } <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>    compile_warn!(<span style=color:#e6db74>&#34;input is bigger&#34;</span>);
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>fn</span> <span style=color:#a6e22e>main</span>() {
+</span></span><span style=display:flex><span>  <span style=color:#75715e>// Empty. I am useless. I strike!
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>}
+</span></span></code></pre></div><p>If it weren&rsquo;t for <code>fn main</code> starting a strike and stopping compilation, this would have worked! Quite bold of <code>fn main</code> to just start a strike, even though there&rsquo;s no <code>union</code> in the entire program. But we really need it, it&rsquo;s not a disposable worker.</p><p>And then, last and least I want to highlight one of my favourite consequences of this: <code>struct else</code></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#66d9ef>struct</span> Some(Test) <span style=color:#f92672>=</span> None <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>  compile_error!(<span style=color:#e6db74>&#34;didn&#39;t match pattern&#34;</span>);
+</span></span><span style=display:flex><span>};
+</span></span></code></pre></div><p>you&rsquo;re asking yourself what you just read. meanwhile, i am asking myself what i just wrote. we are very similar.</p></div></div><div class=pagination><div class=pagination__title><span class=pagination__title-h></span><hr></div><div class=pagination__buttons><span class="button next"><a href=/posts/box-is-a-unique-type/><span class=button__text>Box Is a Unique Type</span>
+<span class=button__icon>→</span></a></span></div></div></div></div><footer class=footer><div class=footer__inner><div class=copyright><span>© 2023 Powered by <a href=http://gohugo.io>Hugo</a></span>
+<span>:: Theme made by <a href=https://twitter.com/panr>panr</a></span></div></div></footer><script src=/assets/main.js></script>
+<script src=/assets/prism.js></script></div></body></html>
