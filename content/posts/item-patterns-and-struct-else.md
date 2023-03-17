@@ -218,38 +218,40 @@ We can go further.
 
 Today, items are just there with no ordering. What if we imposed an ordering? What if "rust items" was a meta scripting language?
 
-Imagine this program:
+We can write a simple guessing game!
 
+```rust
+struct fn input() -> u8 {
+  const INPUT: &str = prompt!();
+  const Ok(INPUT): Result<u8, ParseIntErr> = INPUT.parse() else {
+    compile_error!("Invalid input");
+  };
+  INPUT
+}
+
+const RANDOM: u8 = env!("RANDOM");
+
+loop {
+  const INPUT = input();
+  if INPUT == RANDOM {
+    break; // continue compilation
+  } else if INPUT < RANDOM {
+    compile_warn!("input is smaller");
+  } else {
+    compile_warn!("input is bigger");
+  }
+}
+
+fn main() {
+  // Empty. I am useless.
+}
 ```
-const WITH_LOGS: bool = cfg!(with_logs);
 
-struct A = if const WITH_LOGS {
-  { name: String, logs: Logs }
-} else {
-  { name: String }
+And then, last but not least I want to highlight one of my favourite consequences of this: `struct else`
+
+```rust
+struct Some(Test) = None else {
+  compile_error!("didn't match pattern");
 };
 
-compile_println!("Hello, world!");
-
-const INT_WIDTH: u8 = match struct libc::c_int {
-  i32 => 8,
-  i64 => 4,
-  _ => panic!(),
-};
-
-type OptionU8 = Option<u8>;
-
-struct Some(Person) = (if enum Option<u8> = OptionU8 {
-  None
-} else {
-  { name: String }
-}) else {
-  compile_error!("NO!");
-};
-```
-
-And then we end up at the logical conclusion: `struct else`.
-
-<sub>maybe this post was meant as a joke. maybe it wasn't. it is up to you to bring your own judgement to the idea and write an RFC.</sub>
-<br/>
-<sub>this post was not meant to make fun of anyone's ideas. it was just a good bad idea i had once and then friends made me write this</sub>
+<sub>this post was not meant to make fun of anyone's ideas. it was just a good idea i had once and then friends made me write this</sub>
