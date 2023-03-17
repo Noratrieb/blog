@@ -114,7 +114,7 @@ But even if it was `2`, this code is still not good. There is way too much dupli
 
 Let's have a harder example:
 
-```rust
+```
 const ONE: u8 = 0; const
 NAME: &
 str = "nils";
@@ -145,16 +145,110 @@ struct (Person, Car) = ({ name: String }, { wheels: u8 });
 Here, we create two structs with just a single `struct` keyword. This makes it way simpler and easier to read when related structs are declared.
 So far we've just used tuples. But we can go even further. Metastructs!
 
-```
-struct Household {
-  parent: struct,
-  child: struct,
+```rust
+struct Household<T, U> {
+  parent: T,
+  child: U,
 }
 
-struct Colors { parent: , child: Green } = Colors {
-  red: { 
+struct Household { parent: Ferris, child: Corro } = Household {
+  parent: { name: String },
+  child: { name: String, unsafety: bool },
+};
+```
+
+Now we can nicely patch on the `Household` metastruct containing the definition of the `Ferris` and `Corro` structs. This is equivalent to the following code:
+
+```rust
+struct Feris {
+  name: String,
+}
+
+struct Corro {
+  name: String,
+  unsafety: bool,
+}
+```
+
+This is already really neat, but there's more. We also have to consider the falliblity of patterns.
+
+```rust
+static Some(A) = None;
+```
+
+This pattern doesn't match. Inside bodies, we could use an `if let`:
+
+```rust
+if let Some(a) = None {} else {}
+```
+
+We can also apply this to items.
+
+```rust
+if struct Some(A) = None {
+  /* other items where A exists */
+} else {
+  /* other items where A doesn't exist */
+}
+```
+
+This doesn't sound too useful, it allows for extreme flexibility!
+
+```rust
+macro_rules! are_same_type {
+  ($a:ty, $b:ty) => {{
+    static mut ARE_SAME: bool = false;
+  
+    if struct $a = $b {
+      const _: () = unsafe { ARE_SAME = true; };
+    }
+    
+    unsafe { ARE_SAME }
+  }};
+}
+
+fn main() {
+  if are_same_type!(Vec<String>, String) {
+    println!("impossible to reach!");
+  }
+}
+```
+
+We can go further.
+
+Today, items are just there with no ordering. What if we imposed an ordering? What if "rust items" was a meta scripting language?
+
+Imagine this program:
+
+```
+const WITH_LOGS: bool = cfg!(with_logs);
+
+struct A = if const WITH_LOGS {
+  { name: String, logs: Logs }
+} else {
+  { name: String }
 };
 
+compile_println!("Hello, world!");
+
+const INT_WIDTH: u8 = match struct libc::c_int {
+  i32 => 8,
+  i64 => 4,
+  _ => panic!(),
+};
+
+type OptionU8 = Option<u8>;
+
+struct Some(Person) = (if enum Option<u8> = OptionU8 {
+  None
+} else {
+  { name: String }
+}) else {
+  compile_error!("NO!");
+};
+```
+
+And then we end up at the logical conclusion: `struct else`.
 
 <sub>maybe this post was meant as a joke. maybe it wasn't. it is up to you to bring your own judgement to the idea and write an RFC.</sub>
 <br/>
