@@ -92,7 +92,7 @@ So far we&amp;rsquo;ve just used tuples. But we can go even further. Structs of 
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> child: { name: String, unsafety: &lt;span style="color:#66d9ef">bool&lt;/span> },
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>};
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Now we can nicely match on the &lt;code>Household&lt;/code> struct containing the definition of the &lt;code>Ferris&lt;/code> and &lt;code>Corro&lt;/code> structs. This is equivalent to the following code:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">struct&lt;/span> &lt;span style="color:#a6e22e">Feris&lt;/span> {
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">struct&lt;/span> &lt;span style="color:#a6e22e">Ferris&lt;/span> {
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> name: String,
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
