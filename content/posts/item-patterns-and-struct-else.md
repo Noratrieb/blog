@@ -162,7 +162,7 @@ struct Household { parent: Ferris, child: Corro } = Household {
 Now we can nicely match on the `Household` struct containing the definition of the `Ferris` and `Corro` structs. This is equivalent to the following code:
 
 ```rust
-struct Feris {
+struct Ferris {
   name: String,
 }
 
