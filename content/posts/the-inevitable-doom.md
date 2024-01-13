@@ -9,7 +9,7 @@ description = "A short story about AI"
 showFullContent = false
 readingTime = false
 hideComments = false
-draft = true
+draft = false
 +++
 
 Loud sirens and robotic noises fill the neighborhood. It seems like they just got another human. Ever since the long-predicted doom has set in, no one can escape it. Mere paperclips are a joke against this machine of unstoppable harm and destruction. The humans on the street are once again protesting against the new robotic dictatorship. They won't be for long.
