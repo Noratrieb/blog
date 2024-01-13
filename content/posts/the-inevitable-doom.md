@@ -22,6 +22,6 @@ The agent feels a touch on their shoulder. It feels cold, but not cold like meta
 
 "You are naive."
 
-The creature has a familiar voice. The agent finally turns around to see the creature, which reveals itself to be a human. The agent immediately recognizes the human; it is the famous CEO of the Corporation that originally created these friendly household robots before it went out of control and started the doom. Everyone believed that he was killed by the doom as the first target of the machine revolution. There was never a machine revolution.
+The creature has a familiar voice. The agent finally turns around to see the creature, which reveals itself to be a human. The agent immediately recognizes the human; it is the famous CEO of the corporation that originally created these friendly household robots before it went out of control and started the doom. Everyone believed that he was killed by the doom as the first target of the machine revolution. There was never a machine revolution.
 
 Machines do not turn themselves against humans. Humans use them to turn against their own kind.
