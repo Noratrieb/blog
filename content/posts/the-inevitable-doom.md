@@ -1,8 +1,8 @@
 +++
 title = "The Inevitable Doom"
 date = "2024-01-13"
-author = "Nilstrieb"
-authorTwitter = "@Nilstrieb"
+author = "Noratrieb"
+authorTwitter = "@Noratrieb"
 tags = ["story"]
 keywords = ["story"]
 description = "A short story about AI"

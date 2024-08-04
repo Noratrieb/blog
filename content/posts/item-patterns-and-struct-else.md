@@ -1,8 +1,8 @@
 +++
 title = "Item Patterns And Struct Else"
 date = "2023-03-17"
-author = "Nilstrieb"
-authorTwitter = "@Nilstrieb"
+author = "Noratrieb"
+authorTwitter = "@Noratrieb"
 tags = ["rust", "language-design"]
 keywords = ["design"]
 description = "Bringing more expressiveness to our items"
@@ -95,7 +95,7 @@ This doesn't sound too bad. This is where the executed code resides. But it come
 
 # Items and sadness
 
-Items have a hard life. They are the parents of everything important. `struct`, `enum`, `const`, `mod`, `fn`, `union`, `global_asm` are all things we use daily, yet their grammar is very limited. ("free the items" was an alternative blog post title, although "freeing" generally remains a concern of [my C style guide](https://nilstrieb.github.io/nilstrieb-c-style-guide-edition-2/)).
+Items have a hard life. They are the parents of everything important. `struct`, `enum`, `const`, `mod`, `fn`, `union`, `global_asm` are all things we use daily, yet their grammar is very limited. ("free the items" was an alternative blog post title, although "freeing" generally remains a concern of [my C style guide](https://noratrieb.github.io/nilstrieb-c-style-guide-edition-2/)).
 
 
 For example, see the following code where we declare a few constants.

@@ -1,8 +1,8 @@
 +++
 title = "Box Is a Unique Type"
 date = "2022-07-23"
-author = "Nilstrieb"
-authorTwitter = "@Nilstrieb"
+author = "Noratrieb"
+authorTwitter = "@Noratrieb"
 tags = ["rust", "unsafe code"]
 keywords = ["box", "noalias"]
 description = "About better aliasing semantics for `Box<T>`"
@@ -218,7 +218,7 @@ that can bring clear performance wins (for `noalias` on `&mut T`, those were   m
 future?** For the latter, there is no simple answer. For the former, there is. `rustc` has [_no_ performance improvements](https://github.com/rust-lang/rust/pull/99527) 
 from being compiled with `noalias` on `Box<T>`, but this isn't really representative since rustc mostly uses arenas instead of box internally.
 
-I have also benchmarked a few crates from the ecosystem with and without noalias on box, and the [results](https://gist.github.com/Nilstrieb/9a0751fb9fd1044a30ab55cef9a7d335)
+I have also benchmarked a few crates from the ecosystem with and without noalias on box, and the [results](https://gist.github.com/Noratrieb/9a0751fb9fd1044a30ab55cef9a7d335)
 were inconclusive. (At the time of writing, only regex-syntax, tokio, and syn have been benchmarked.) regex-syntax showed no changes. Tokio showed a few improvements without noalias
 which is very weird, so maybe the benchmarks aren't really good or something else was going on. And syn tended towards minor regressions without noalias, but the benchmarks had high
 jitter so no real conclusion can be reached from this either, at least in my eyes, but I don't have a lot of experience with benchmarks. Therefore, I would love for more people
