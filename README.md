@@ -1,6 +1,4 @@
-# [nilstrieb.github.io](https://nilstrieb.github.io)
-
-[![github pages](https://github.com/Nilstrieb/nilstrieb.github.io/actions/workflows/pages.yml/badge.svg)](https://github.com/Nilstrieb/nilstrieb.github.io/actions/workflows/pages.yml)
+# [noratrieb.dev/blog](https://noratrieb.dev/blog)
 
 a very good blog
 
