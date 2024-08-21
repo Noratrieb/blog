@@ -1,6 +1,9 @@
-use chacha20::cipher::KeyIvInit;
-use chacha20::cipher::StreamCipher;
-use chacha20::cipher::StreamCipherSeek;
+//! ```toml
+//! [dependencies]
+//! chacha20 = "0.9.1"
+//! ````
+
+use chacha20::cipher::{KeyIvInit, StreamCipher};
 
 fn main() {
     let key: chacha20::Key = [
@@ -8,24 +11,28 @@ fn main() {
         25, 26, 27, 28, 29, 30, 31,
     ]
     .into();
-    let nonce: chacha20::Nonce = [0; 12].into();
-    let mut cipher = chacha20::ChaCha20::new(&key, &nonce);
+    let mut cipher = chacha20::ChaCha20::new(&key, &[0; 12].into());
 
-    let mut plaintext = "ls -l /etc".as_bytes().to_vec();
-    eprintln!("{:x?}", plaintext);
+    // Encrypt
+    let plaintext = "ls -l /etc";
+    eprintln!("plaintext:    {:?}", plaintext);
+    let mut plaintext = plaintext.as_bytes().to_vec();
+    eprintln!("plaintext:    {:x?}", plaintext);
     cipher.apply_keystream(&mut plaintext);
+    eprintln!("ciphertext:   {:x?}", plaintext);
 
-    eprintln!("{:x?}", plaintext);
-    flippit(&mut plaintext);
-    eprintln!("{:x?}", plaintext);
+    // Flipping
+    flip_it(&mut plaintext);
+    eprintln!("ciphertext 2: {:x?}", plaintext);
 
-    cipher.seek(0);
+    // Decrypt
+    let mut cipher = chacha20::ChaCha20::new(&key, &[0; 12].into());
     cipher.apply_keystream(&mut plaintext);
-    eprintln!("{:x?}", plaintext);
-    eprintln!("{:x?}", String::from_utf8(plaintext).unwrap());
+    eprintln!("plaintext 2:  {:x?}", plaintext);
+    eprintln!("plaintext 2:  {:x?}", String::from_utf8(plaintext).unwrap());
 }
 
-fn flippit(ciphertext: &mut [u8]) {
+fn flip_it(ciphertext: &mut [u8]) {
     ciphertext[0] ^= 0b0001_1110;
     ciphertext[1] ^= 0b0001_1110;
     ciphertext[4] ^= 0b0001_1110;
