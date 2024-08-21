@@ -142,7 +142,7 @@ Before doing the actual key exchange, both parties send a message of their suppo
 Both parties then take the list of supported algorithms and determine which one to use.
 Since it's so old, SSH supports some ciphers that are not considered secure today, like 3DES or even RC4[^rc4-deprecation].
 Alice might also have reasons to not use specific modern ciphers.
-For example, if she really cares about this data remaining secret for 50 years, she might prefer not using AES-128 (even though that is totally secure today, and is in fact used to serve you this web page) as it is not resistant against quantum computers.
+For example, if she really cares about this data remaining secret for 50 years, she might prefer not using AES-128 (even though that is totally secure today, and is in fact used to serve you this web page) as it is not quantum-resistant.
 If she *really* cares about this, she should disable support for it in her configuration, but we want to remain secure even if she forgets this.
 
 Alice's server does support and prefer the latest and greatest ciphers... but what if Eve tricked Alice into believing it didn't support them?
