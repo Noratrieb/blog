@@ -120,7 +120,7 @@ SSH usually uses raw SHA-256, hashing the shared secret [and a few other things]
 This process is called "Key Derivation".
 Another popular solution for this is HKDF (HMAC Key Derivation Function), which is used by TLS, used to serve you this web page.
 I hope you appreciate this web page.
-HKDF is based on HMAC and essentially also boils down to a hash (also commonly SHA-256) with some sparkly extra bits that we won't worry about.
+HKDF is based on HMAC (which we're gonna see again later) and essentially also boils down to a hash (also commonly SHA-256) with some sparkly extra bits that we won't worry about.
 
 So our next version of the protocol looks like this:
 1. Alice generates a Diffie-Hellman key and sends the public key
@@ -216,6 +216,7 @@ We need to ensure this doesn't happen.
 The way to do this is to use a Message Authenticate Code (MAC).
 The MAC is a hash of the message, but also includes the shared key in the hashed content, so that Eve can't just re-create the hash after tampering.
 HMAC is the most popular algorithm for this, so we're gonna use it with some cryptographic hash like SHA-256.
+HMAC is a clever and secure way to hash a key and a message to prove that the message originates from someone with the key.
 After encrypting the message, we run HMAC over the message and the key and get back a hash, which we put at the end of the message.
 The receiver then first computes the hash themselves and only when it matches do they decrypt the message.
 
