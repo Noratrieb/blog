@@ -146,7 +146,7 @@ For example, if she really cares about this data remaining secret for 50 years, 
 If she *really* cares about this, she should disable support for it in her configuration, but we want to remain secure even if she forgets this.
 
 Alice's server does support and prefer the latest and greatest ciphers... but what if Eve tricked Alice into believing it didn't support them?
-When the server sends its list of supported algorithms, Eve modifies this to only contain 3DES (or some other undesriable cipher).
+When the server sends its list of supported algorithms, Eve modifies this to only contain 3DES (or some other undesirable cipher).
 When Alice's client advertises her supported ciphers to the server, Eve again modifies it to only contain 3DES.
 Now both the server and the client think that the peer only supports 3DES, and select 3DES[^3des-sshd], which is not what Alice would want!
 This is called a "downgrade attack", as it downgrades the good security into bad security that can be exploited by Eve.
