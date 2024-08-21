@@ -318,7 +318,7 @@ If you want to know more about this topic, I can recommend the following resourc
 [^cia]: But I'm sure they like breaking it.
 [^add-security]: I like using the phrase "add security" jokingly to refer to systems that use security-adjacent things but don't actually gain any security from it.
       But it doesn't apply here, we're gonna do serious security!
-[^add-security-encryption]: Which is often the source of the afformentioned "add security" jokes.
+[^add-security-encryption]: Which is often the source of the aforementioned "add security" jokes.
 [^use-https]: I'm not even gonna mention that the website would need to be secured using HTTPS.
               You're using HTTPS, right? At least when visiting this web page, you must be, as this server does not support HTTP.
               Try it via curl!
