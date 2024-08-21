@@ -171,7 +171,7 @@ A cipher can either be a block cipher or a stream cipher. A block cipher splits 
 and then encrypts one block after the other. AES is a block cipher.
 
 You need a *mode of operation* for this, which describes how exactly the blocks are encrypted.
-The most popular mode of operation of AES these days is Counter Mode (CTR) (or rather, it's better sibling Galois Counter Mode (GCM), which we will get to later).
+The most popular mode of operation of AES these days is Counter Mode (CTR) (or rather, its better sibling Galois Counter Mode (GCM), which we will get to later).
 Counter mode doesn't actually encrypt the message in blocks, it just encrypts a number, the counter, for every block.
 The resulting ciphertext can then be used as the keystream for a *stream cipher*.
 
