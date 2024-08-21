@@ -1,6 +1,6 @@
 +++
 title = "How SSH Secures Your Connection"
-date = "2024-08-19"
+date = "2024-08-21"
 author = "Noratrieb"
 authorTwitter = "@Noratrieb"
 tags = ["ssh", "security", "cryptography"]
@@ -9,7 +9,7 @@ description = "Explaining SSH security by example"
 showFullContent = false
 readingTime = true
 hideComments = false
-draft = true
+draft = false
 +++
 
 If you've ever remotely connected to any UNIX-like server, you have likely used SSH, short for "Secure Shell".
