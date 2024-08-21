@@ -266,7 +266,7 @@ I tried executing such an attack on my own server using a [custom tool](https://
 Not quite enough for a proper DoS, but the attack can probably be improved with more dedication than I was willing to put in for this post.
 
 If this becomes a problem for Alice, the best solution to protect against Eve is to change the firewall to only allow access from certain IPs that are used by Alice, blocking out all of Eve's IPs in the process.
-She could also use a VPN solution like Wireguard to only connect to the server via the VPN and never expose SSH publically.
+She could also use a VPN solution like Wireguard to only connect to the server via the VPN and never expose SSH publicly.
 
 It must be said that in our concrete scenario, Eve could just choose to drop all of Alice's SSH packets, preventing her from accessing the server and totally compromising availability.
 There is nothing she can do do prevent that, other than calling up university support and try to get it resolved there, which would probably result in Eve getting fired.
