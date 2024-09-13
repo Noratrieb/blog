@@ -94,7 +94,7 @@ it goes without saying but never share your private key on the internet and this
 the entire key is base64-encoded in the [PEM](https://en.wikipedia.org/wiki/Privacy-Enhanced_Mail) format.
 this makes it easier to copy around compared to raw bytes. not that you're supposed to copy it to random places.
 
-An OpenSSH private key consists of two areas:
+an OpenSSH private key consists of two areas:
 - a plaintext area with the public key
 - a potentially encrypted area with the private key
 
@@ -122,7 +122,7 @@ the unencrypted public area makes it easy to check which public key a private ke
 the encrypted area makes sure that even if someone manages to steal your private key, they can't use it unless they know your password.
 unless you haven't set a password of course. which is why you should set a password for your private key.
 
-having the private key bytes in there THREE TIMES seems very silly. but the fact that the public key is in there at all is useful.
+having the public key bytes in there THREE TIMES seems very silly. but the fact that the public key is in there at all is useful.
 
 maybe you've been in a situation where you've needed to find the public key file of a private key you had around, and just couldn't find it.
 but as I just mentioned, you don't actually need the `.pub` file for that, as the public key is contained in the private key.
