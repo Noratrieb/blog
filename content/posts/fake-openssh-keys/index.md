@@ -89,7 +89,7 @@ fqAyMdgrbAItrO8XWwP9AAAACm5vcmFAbml4b3MBAgM=
 -----END OPENSSH PRIVATE KEY-----
 ```
 
-it goes without saying but never share your private key on the internet and this is obivously just a test key!
+it goes without saying but never share your private key on the internet and this is obviously just a test key!
 
 the entire key is base64-encoded in the [PEM](https://en.wikipedia.org/wiki/Privacy-Enhanced_Mail) format.
 this makes it easier to copy around compared to raw bytes. not that you're supposed to copy it to random places.
