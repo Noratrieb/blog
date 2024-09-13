@@ -96,7 +96,7 @@ this makes it easier to copy around compared to raw bytes. not that you're suppo
 
 an OpenSSH private key consists of two areas:
 - a plaintext area with the public key
-- a potentially encrypted area with the private key
+- a potentially-encrypted area with the private key
 
 most strings are length-prefixed, i'm not gonna mention the length explicitly for many of the cases here.
 if it starts with 3 null bytes, the first 4 bytes are probably the length.
