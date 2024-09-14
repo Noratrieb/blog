@@ -1,86 +1,97 @@
+/* _pagination.scss */
 .pagination {
   margin-top: 50px;
+}
 
-  @media print {
-    display: none;
-  }
+.pagination__title {
+  display: flex;
+  text-align: center;
+  position: relative;
+  margin: 100px 0 20px;
+}
 
-  &__title {
-    display: flex;
-    text-align: center;
-    position: relative;
-    margin: 100px 0 20px;
+.pagination__title-h {
+  text-align: center;
+  margin: 0 auto;
+  padding: 5px 10px;
+  background: var(--background);
+  color: color-mix(in srgb var(--foreground) 30%, transparent);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  text-decoration: none;
+  letter-spacing: 0.1em;
+  z-index: 1;
+}
 
-    &-h {
-      text-align: center;
-      margin: 0 auto;
-      padding: 5px 10px;
-      background: color-mod(var(--accent) blend(#1D1E28 98%));
-      font-size: .8rem;
-      text-transform: uppercase;
-      text-decoration: none;
-      letter-spacing: .1em;
-      z-index: 1;
-    }
+.pagination__title hr {
+  position: absolute;
+  left: 0;
+  right: 0;
+  width: 100%;
+  margin-top: 15px;
+  z-index: 0;
+}
 
-    hr {
-      position: absolute;
-      left: 0;
-      right: 0;
-      width: 100%;
-      margin-top: 15px;
-      z-index: 0;
-    }
-  }
+.pagination__buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-flow: row wrap;
+  gap: 10px;
+}
 
-  &__buttons {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    a {
-      text-decoration: none;
-    }
-  }
+.pagination__buttons a {
+  display: inline-flex;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  text-decoration: none;
 }
 
 .button {
   position: relative;
   display: inline-flex;
-  flex: 1;
   align-items: center;
   justify-content: center;
   font-size: 1rem;
-  border-radius: 8px;
   padding: 0;
-  cursor: pointer;
   appearance: none;
+}
+
+.button a {
+  display: flex;
+  justify-content: center;
+  flex: 1;
+  padding: 8px 16px;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   overflow: hidden;
+}
 
-  + .button {
-    margin-left: 10px;
+.button__text {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.next .button__icon {
+  margin-left: 8px;
+}
+
+.prev .button__icon {
+  margin-right: 8px;
+}
+
+@media (max-width: 684px) {
+  .button {
+    flex: 1;
   }
+}
 
-  a {
-    display: flex;
-    padding: 8px 16px;
-    text-decoration: none;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
-  }
-
-  &__text {
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
-  }
-
-  &.next .button__icon {
-    margin-left: 8px;
-  }
-
-  &.previous .button__icon {
-    margin-right: 8px;
+@media print {
+  .pagination {
+    display: none;
   }
 }

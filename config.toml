@@ -8,7 +8,6 @@ name = "Noratrieb"
 
 [params]
 contentTypeName = "posts"
-themeColor = "orange"
 centerTheme = true
 
 [params.logo]
