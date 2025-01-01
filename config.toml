@@ -3,9 +3,6 @@ languageCode = "en-us"
 title = "Noratrieb's blog"
 theme = "terminal"
 
-[author]
-name = "Noratrieb"
-
 [params]
 contentTypeName = "posts"
 centerTheme = true
