@@ -58,7 +58,7 @@ While it can be a bit verbose, it makes the code much easier to understand witho
 
 Which is where this turns into a language design post: programming languages should not have these hierarchies in the first place, and parentheses should just be required.
 It seems acceptable to allow it for the basic math operations most people are familiar with, but there is no reason why `||` and `^` should have a precedence relationship.
-There are also some other cases where you might want to have precedence; for example, writing `x > 0 && x > 5` is fairly clear and useful. But in general, not everything should have a relative precedence with everything else.
+There are also some other cases where you might want to have precedence; for example, writing `x > 0 && x < 5` is fairly clear and useful. But in general, not everything should have a relative precedence with everything else.
 
 And until programming languages require you to do this[^lisp], we can at least do it ourselves. And maybe even enable a linter rule that requires it, if it exists for the language.
 
