@@ -37,7 +37,7 @@ But it gets worse.
 Let's look at Rust (from [the reference](https://doc.rust-lang.org/stable/reference/expressions.html))
 - multiplicative (`*`, `/`, `%`)
 - additive (`+`, `-`)
-- bit shifts (`<<`, `>>`, `>>>`)
+- bit shifts (`<<`, `>>`)
 - bit and (`&`)
 - bit xor (`^`)
 - bit or (`|`)
