@@ -2,7 +2,6 @@
 title = "Item Patterns And Struct Else"
 date = "2023-03-17"
 author = "Noratrieb"
-authorTwitter = "@Noratrieb"
 tags = ["rust", "language-design"]
 keywords = ["design"]
 description = "Bringing more expressiveness to our items"

@@ -2,7 +2,6 @@
 title = "How SSH Secures Your Connection"
 date = "2024-08-21"
 author = "Noratrieb"
-authorTwitter = "@Noratrieb"
 tags = ["ssh", "security", "cryptography"]
 keywords = ["box", "noalias"]
 description = "Explaining SSH security by example"

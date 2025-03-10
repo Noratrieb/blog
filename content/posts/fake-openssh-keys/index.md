@@ -2,7 +2,6 @@
 title = "Having fun with OpenSSH private keys"
 date = "2024-09-13"
 author = "Noratrieb"
-authorTwitter = "@Noratrieb"
 tags = ["ssh"]
 keywords = ["SSH"]
 description = "An interactive way to have fun with OpenSSH private keys"
