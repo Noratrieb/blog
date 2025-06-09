@@ -1,0 +1,17 @@
+       │                        
+       ▼                        
+     ┌───┐ ┌───┐                
+ ld  │a.o│ │b.o│                
+     └───┘ └───┘                
+                               
+  ┌───────────┐   ┌───────────┐ 
+  │a.o        │   │b.o        │ 
+  │defined:   │   │defined:   │ 
+  │ myfunc    │   │ dependency│ 
+  │undefined: │   │           │ 
+  │ dependency│   │           │ 
+  └───────────┘   └───────────┘ 
+                               
+     symbols:                   
+
+
