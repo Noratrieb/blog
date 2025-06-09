@@ -8,7 +8,7 @@ description = "A summary on how linkers resolve symbols on Unix-like platforms"
 showFullContent = false
 readingTime = true
 hideComments = false
-draft = true
+draft = false
 +++
 
 When you invoke `cargo build`, `make`, or any other native compilation, a lot of things happen.
