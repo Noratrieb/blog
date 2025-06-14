@@ -58,7 +58,7 @@ A static library is just an `ar` (similar to `tar`) archive of object files.
 
 ### Dynamic Library (`lib*.so`)
 
-Mainly called "shared library" in ELF, they are the oppose of static libraries.
+Mainly called "shared library" in ELF, they are the opposite of static libraries.
 If you link against a shared library, the code from the shared library will *not* end up in the final binary.
 Instead, the shared library will be loaded at runtime startup, and the dynamic linker will resolve the references to its symbols there.
 We will not go into dynamic linking and loading in this post,
