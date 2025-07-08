@@ -108,7 +108,7 @@ The linker can then create the output file, making sure that the reference that'
 While I mentioned that this happens from start to end, the order doesn't actually matter so far.
 This changes when we get into libraries.
 
-Libraries (both static and dyamic) behave similar to object files. They are read and their defined and undefined symbols are added to symbol table.
+Libraries (both static and dynamic) behave similar to object files. They are read and their defined and undefined symbols are added to symbol table.
 Except for libraries, the linker is lazy. If a library does *not satisfy any currently undefined symbols*, it's *not* read at all.
 
 So for example, if instead of `b.o` we had `libb.a` linked in via `-lb`, the library would be linked in, as it can provide the `dependency` symbol.
@@ -181,7 +181,7 @@ I can also always recommend experimenting with this yourself, or maybe even writ
 [^pe]: **P**ortable **E**xecutable, the format of `.exe` executable and `.dll` dynamic library files.
 [^coff]: **C**ommon **O**bject **F**ile **F**ormat, the format of `.obj` object files.
 [^macho]: Which gets its name from the Mach kernel, which Apple platforms are based on.
-[^xcoff]: No IBM, I don't care about XCOFF, which is surprsingly still in use today the same way IBM AIX is still in use today.
+[^xcoff]: No IBM, I don't care about XCOFF, which is surprisingly still in use today the same way IBM AIX is still in use today.
           While we're doing a history lesson, there is also an "a.out" format that was used on older Unixes. It's the reason
           why ELF linkers still name their output file `a.out` if you don't override the name.
 [^mangling]: If you want to learn how C++ mangles its names, I can recommend [my interactive website on this topic](https://noratrieb.github.io/womangling/).
