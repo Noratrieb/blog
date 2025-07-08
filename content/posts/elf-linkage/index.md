@@ -112,7 +112,7 @@ Libraries (both static and dynamic) behave similar to object files. They are rea
 Except for libraries, the linker is lazy. If a library does *not satisfy any currently undefined symbols*, it's *not* read at all.
 
 So for example, if instead of `b.o` we had `libb.a` linked in via `-lb`, the library would be linked in, as it can provide the `dependency` symbol.
-But if we instead did `ld -lb a.o`, b would be skipped, and then `a.o` would be read, and the `dependency` symbol would be unsatisfied!
+But if we instead did `ld -lb a.o`, then `b` would be skipped, and then `a.o` would be read, and the `dependency` symbol would be unsatisfied!
 
 To get around this, we always need to ensure that we provide each library and object file before its dependencies, so passing the dependency tree in a preorder/topologically sorted order, if you're into that terminology.
 
