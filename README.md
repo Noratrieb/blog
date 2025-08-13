@@ -1,4 +1,3 @@
 # [noratrieb.dev/blog](https://noratrieb.dev/blog)
 
-a very good blog
-
+this has been moved to https://github.com/noratrieb/website
